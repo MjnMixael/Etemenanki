@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34309.116
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Etemenanki", "Etemenanki\Etemenanki.vcxproj", "{4543B0C0-B877-4DFE-9C00-FAFD47F279C4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4543B0C0-B877-4DFE-9C00-FAFD47F279C4}.Debug|x64.ActiveCfg = Debug|x64
+		{4543B0C0-B877-4DFE-9C00-FAFD47F279C4}.Debug|x64.Build.0 = Debug|x64
+		{4543B0C0-B877-4DFE-9C00-FAFD47F279C4}.Release|x64.ActiveCfg = Release|x64
+		{4543B0C0-B877-4DFE-9C00-FAFD47F279C4}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {024C55AE-4B0F-441F-990A-E5C2BB141661}
+	EndGlobalSection
+EndGlobal
