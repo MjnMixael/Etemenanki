@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <sstream>
 #include <fstream>
 #include <filesystem>
 #include <regex>
@@ -12,14 +13,22 @@ struct xstrPair {
     std::string text;
 };
 
-extern int Counter;
-extern int Offset;
+struct regexPattern {
+    std::regex pattern;
+    int string_position;
+    int id_position;
+    int idx;
+    std::string pattern_string;
+};
 
-extern std::ofstream Output_file;
+extern std::string Output_filename;
+
+extern int Offset;
+extern bool Replace_existing;
 
 extern std::vector<std::string> Valid_extensions;
 
-extern std::regex Valid_patterns[];
+extern std::vector<regexPattern> Valid_patterns;
 
 extern std::string Input_path;
 

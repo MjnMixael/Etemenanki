@@ -5,23 +5,34 @@ namespace fs = std::filesystem;
 QLabel* Terminal;
 
 int Counter = 0;
-int Offset = 4000;
+
+int Offset = 0;
+bool Replace_existing = false;
+
+std::string Output_filename;
 
 std::vector<xstrPair> XSTR_list;
 
-std::ofstream Output_file("output.txt");
+std::ofstream Output_file;
 
-std::vector<std::string> Valid_extensions = { ".tbm", ".tbl", ".lua", ".fs2", ".fc2", ".cfg" };
+std::vector<std::string> Valid_extensions;
 
-std::regex Valid_patterns[] = {
-        std::regex("XSTR\\(\"([^\"]+)\",\\s*(-?\\d+)\\)"),
-        std::regex("([a-zA-Z0-9_]+)\\s*=\\s*\\{\\s*\"([^\"]+)\",\\s*(-?\\d+)\\}"),
-        std::regex("utils\\.xstr\\(\\{\\s*\"([^\"]+)\",\\s*(-?\\d+)\\}\\)"),
-        std::regex("\\+Val:\\s*([a-zA-Z0-9_]+)\\s*\\(\\s*\"([^\"]+)\",\\s*(-?\\d+)\\)"),
-        std::regex("\\[\"([^\"]+)\",\\s*(-?\\d+)\\]")
-};
+std::vector<regexPattern> Valid_patterns;
 
-std::string Input_path = "C:\\Games\\FreespaceOpen\\FS2\\BtA-2.0.0";
+std::string Input_path;
+
+void setTerminalText(std::string text) {
+    QString msg = QString::fromStdString(text);
+    Terminal->setText(msg);
+}
+
+int savePair(std::string line, int id) {
+    xstrPair newPair = { id, line };
+    XSTR_list.push_back(newPair);
+    Output_file << newPair.id << ", \"" << newPair.text << "\"" << std::endl;
+
+    return newPair.id;
+}
 
 std::string replacePattern(const std::string& input, const std::string& somestring, int counter) {
     std::regex pattern("\"([^\"]+)\",\\s*(-?\\d+)");
@@ -35,6 +46,20 @@ std::string replacePattern(const std::string& input, const std::string& somestri
     return input;
 }
 
+bool hasInvalidID(std::string line, int id) {
+    for (auto& pair : XSTR_list) {
+        if (pair.id == id) {
+            if (pair.text != line) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    return false;
+}
+
 int getXSTR(std::string line) {
     for (auto& pair : XSTR_list) {
         if (pair.text == line) {
@@ -44,50 +69,30 @@ int getXSTR(std::string line) {
 
     int id = Offset + Counter++;
 
-    xstrPair newPair = { id, line };
-
-    XSTR_list.push_back(newPair);
-
-    //Save new line to output file
-    Output_file << newPair.id << ", \"" << newPair.text << "\"" << std::endl;
-
-    return newPair.id;
-}
-
-void printExistingInteger(std::string text) {
-    int existingInteger = std::stoi(text);
-
-    if (existingInteger != -1) {
-        //std::cout << "Existing Integer in line: " << existingInteger << std::endl;
-        std::string text = "Existing Integer in line: " + existingInteger;
-        Etemenanki dlg;
-        dlg.set_terminal_text(text);
-    }
+    return savePair(line, id);
 }
 
 void processFile(const fs::path& filePath) {
     std::ifstream inputFile(filePath);
     if (!inputFile.is_open()) {
-        std::cerr << "Error opening file: " << filePath.string() << std::endl;
+        std::string msg = "Error opening file: " + filePath.string();
+        setTerminalText(msg);
         return;
     }
+
+    std::string modifiedContent = "";
 
     bool found = false;
 
     // Print to the terminal
-    //std::cout << "Processing file: " << filePath.filename().string() << std::endl;
-    std::string text = "Processing file: " + filePath.filename().string();
-    QString q_text;
-    q_text.fromStdString(text);
-    Terminal->setText(q_text);
+    std::string msg = "Processing file: " + filePath.filename().string();
+    setTerminalText(msg);
 
     std::string line;
     while (std::getline(inputFile, line)) {
-        int count = 0;
-        for (const auto& pattern : Valid_patterns) {
-            count++;
+        for (const auto& set : Valid_patterns) {
             std::smatch match;
-            if (std::regex_search(line, match, pattern)) {
+            if (std::regex_search(line, match, set.pattern)) {
 
                 if (!found) {
                     found = true;
@@ -97,40 +102,78 @@ void processFile(const fs::path& filePath) {
                     Output_file << ";;" << filePath.filename().string() << std::endl;
 
                     // Print to the terminal
-                    std::cout << "Found XSTR matches using pattern " << count << "!" << std::endl;
+                    msg = "Found XSTR matches using pattern \"" + set.pattern_string + "\"";
+                    setTerminalText(msg);
                 }
 
-                std::string somestring = match[1].str();
+                std::string somestring = match[set.string_position].str();
+                std::string current_id = match[set.id_position].str();
 
-                // Debug notice only if we're not in a normal XSTR pattern
-                if (count == 1) {
-                    std::cout << "Processing pattern 1" << std::endl;
-                    printExistingInteger(match[2].str());
+                int id;
+                try {
+                    id = std::stoi(current_id);
                 }
-                if (count == 2) {
-                    std::cout << "Processing pattern 2" << std::endl;
-                    printExistingInteger(match[3].str());
+                catch (const std::invalid_argument& e) {
+                    std::string error = e.what();
+                    msg = "Invalid argument: " + error;
+                    setTerminalText(msg);
+                    id = -1;
                 }
-                if (count == 3) {
-                    std::cout << "Processing pattern 3" << std::endl;
-                    printExistingInteger(match[2].str());
+                catch (const std::out_of_range& e) {
+                    std::string error = e.what();
+                    msg = "Out of range: " + error;
+                    setTerminalText(msg);
+                    id = -1;
                 }
-                if (count == 4) {
-                    std::cout << "Processing pattern 4" << std::endl;
-                    printExistingInteger(match[3].str());
+                catch (...) {
+                    setTerminalText("An unknown error occurred.");
+                    id = -1;
                 }
-                if (count == 5) {
-                    std::cout << "Processing pattern 5" << std::endl;
-                    printExistingInteger(match[2].str());
+
+                if (id >= 0) {
+                    msg = "Existing Integer in line: " + id;
+                    setTerminalText(msg);
                 }
-                // Replace using the same pattern
-                line = replacePattern(line, somestring, getXSTR(somestring));
+
+                // Check for invalid duplicate IDs
+                bool invalid_id = false;
+                if (!Replace_existing && (hasInvalidID(somestring, id))) {
+                    invalid_id = true;
+                }
+
+                // Maybe get a new id
+                if ((id == -1) || invalid_id || Replace_existing) {
+                    id = getXSTR(somestring);
+                }
+                else {
+                    savePair(somestring, id);
+                }
+                line = replacePattern(line, somestring, id);
             }
         }
+
+        // Append the modified line to the modified content
+        modifiedContent += line + '\n';
+    }
+    inputFile.close();
+
+    if (found) {
+        // Write the modified content back to the file
+        std::ofstream outputFile(filePath, std::ofstream::trunc);
+        if (!outputFile.is_open()) {
+            msg = "Error saving file: " + filePath.string();
+            setTerminalText(msg);
+            return;
+        }
+
+        outputFile << modifiedContent;
+        outputFile.close();
     }
 
-    inputFile.close();
+    msg = "Processing completed for file: " + filePath.string();
+    setTerminalText(msg);
 }
+
 
 bool isExtensionValid(std::string extension) {
     for (auto ext : Valid_extensions) {
@@ -143,6 +186,7 @@ bool isExtensionValid(std::string extension) {
 }
 
 void processDirectory(const fs::path& directoryPath) {
+    setTerminalText(Input_path);
     for (const auto& entry : fs::recursive_directory_iterator(directoryPath)) {
         if (entry.is_regular_file()) {
             // Check if the file has the required extension
@@ -158,7 +202,9 @@ void processDirectory(const fs::path& directoryPath) {
 int run(QLabel* terminal) {
     Terminal = terminal;
 
-    Terminal->setText("Running!");
+    setTerminalText("Running!");
+
+    Output_file.open(Output_filename);
 
     fs::path directoryPath = Input_path;
     if (!fs::is_directory(directoryPath)) {
@@ -180,7 +226,8 @@ int run(QLabel* terminal) {
 
     Output_file.close();
 
-    std::cout << "Processing completed. Output saved to output.txt." << std::endl;
+    std::string msg = "Processing completed. Output saved to " + Output_filename;
+    setTerminalText(msg);
 
     return 0;
 }
