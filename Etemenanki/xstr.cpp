@@ -46,6 +46,16 @@ std::string replacePattern(const std::string& input, const std::string& somestri
     return input;
 }
 
+int getExistingXSTR(std::string line) {
+    for (auto& pair : XSTR_list) {
+        if (pair.text == line) {
+            return pair.id;
+        }
+    }
+
+    return -1;
+}
+
 bool hasInvalidID(std::string line, int id) {
     for (auto& pair : XSTR_list) {
         if (pair.id == id) {
@@ -61,13 +71,13 @@ bool hasInvalidID(std::string line, int id) {
 }
 
 int getXSTR(std::string line) {
-    for (auto& pair : XSTR_list) {
-        if (pair.text == line) {
-            return pair.id;
-        }
+    int id = getExistingXSTR(line);
+
+    if (id >= 0) {
+        return id;
     }
 
-    int id = Offset + Counter++;
+    id = Offset + Counter++;
 
     return savePair(line, id);
 }
@@ -103,7 +113,7 @@ void processFile(const fs::path& filePath) {
 
                     // Print to the terminal
                     msg = "Found XSTR matches using pattern \"" + set.pattern_string + "\"";
-                    setTerminalText(msg);
+                    //setTerminalText(msg);
                 }
 
                 std::string somestring = match[set.string_position].str();
@@ -116,23 +126,23 @@ void processFile(const fs::path& filePath) {
                 catch (const std::invalid_argument& e) {
                     std::string error = e.what();
                     msg = "Invalid argument: " + error;
-                    setTerminalText(msg);
+                    //setTerminalText(msg);
                     id = -1;
                 }
                 catch (const std::out_of_range& e) {
                     std::string error = e.what();
                     msg = "Out of range: " + error;
-                    setTerminalText(msg);
+                    //setTerminalText(msg);
                     id = -1;
                 }
                 catch (...) {
-                    setTerminalText("An unknown error occurred.");
+                    //setTerminalText("An unknown error occurred.");
                     id = -1;
                 }
 
                 if (id >= 0) {
                     msg = "Existing Integer in line: " + id;
-                    setTerminalText(msg);
+                    //setTerminalText(msg);
                 }
 
                 // Check for invalid duplicate IDs
@@ -146,7 +156,9 @@ void processFile(const fs::path& filePath) {
                     id = getXSTR(somestring);
                 }
                 else {
-                    savePair(somestring, id);
+                    if (getExistingXSTR(somestring) == -1) {
+                        savePair(somestring, id);
+                    }
                 }
                 line = replacePattern(line, somestring, id);
             }
@@ -162,7 +174,7 @@ void processFile(const fs::path& filePath) {
         std::ofstream outputFile(filePath, std::ofstream::trunc);
         if (!outputFile.is_open()) {
             msg = "Error saving file: " + filePath.string();
-            setTerminalText(msg);
+            //setTerminalText(msg);
             return;
         }
 
@@ -171,7 +183,7 @@ void processFile(const fs::path& filePath) {
     }
 
     msg = "Processing completed for file: " + filePath.string();
-    setTerminalText(msg);
+    //setTerminalText(msg);
 }
 
 
@@ -199,9 +211,7 @@ void processDirectory(const fs::path& directoryPath) {
     }
 }
 
-int run(QLabel* terminal) {
-    Terminal = terminal;
-
+int run() {
     setTerminalText("Running!");
 
     Output_file.open(Output_filename);

@@ -2,6 +2,7 @@
 
 #include <QtWidgets/QMainWindow>
 #include <QThread>
+#include <QTimer>
 #include <QObject>
 #include "ui_Etemenanki.h"
 #include "xstr.h"

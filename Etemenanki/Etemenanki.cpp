@@ -6,6 +6,8 @@ Etemenanki::Etemenanki(QWidget *parent)
 {
     ui.setupUi(this);
 
+    Terminal = ui.terminal_output;
+
     ui.offset_line_edit->setValidator(new QIntValidator(0, 9999999, this));
     ui.position_string_line_edit->setValidator(new QIntValidator(0, 9, this));
     ui.position_id_line_edit->setValidator(new QIntValidator(0, 9, this));
@@ -17,7 +19,7 @@ Etemenanki::Etemenanki(QWidget *parent)
     ui.output_line_edit->setText("tstrings.tbl");
     ui.directory_line_edit->setText("C:\\Games\\FreespaceOpen\\FS2\\BtA-2.0.0");
     ui.offset_line_edit->setText("0");
-    add_regex_row("XSTR\\s*\\(\\s*\"([^\"] + )\",\\s*(-?\\d+)\\s*\\)", "1", "2");
+    add_regex_row("XSTR\\(\"([^\"]+)\",\\s*(-?\\d+)\\)", "1", "2");
     add_regex_row("([a-zA-Z0-9_]+)\\s*=\\s*\\{\\s*\"([^\"]+)\",\\s*(-?\\d+)\\}", "2", "3");
     add_regex_row("utils\\.xstr\\(\\{\\s*\"([^\"]+)\",\\s*(-?\\d+)\\}\\)", "1","2");
     add_regex_row("\\+Val:\\s*([a-zA-Z0-9_]+)\\s*\\(\\s*\"([^\"]+)\",\\s*(-?\\d+)\\)", "2","3");
@@ -266,7 +268,7 @@ void Etemenanki::on_begin_button_clicked() {
 }
 
 void Etemenanki::runXSTR() {
-    run(ui.terminal_output);
+    run();
 }
 
 void Etemenanki::set_terminal_text(std::string input) {

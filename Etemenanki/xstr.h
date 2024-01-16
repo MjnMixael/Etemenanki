@@ -21,6 +21,8 @@ struct regexPattern {
     std::string pattern_string;
 };
 
+extern QLabel* Terminal;
+
 extern std::string Output_filename;
 
 extern int Offset;
@@ -32,4 +34,4 @@ extern std::vector<regexPattern> Valid_patterns;
 
 extern std::string Input_path;
 
-int run(QLabel* terminal);
+int run();
