@@ -17,7 +17,7 @@ Etemenanki::Etemenanki(QWidget *parent)
 
     // Default values
     ui.output_line_edit->setText("tstrings.tbl");
-    ui.directory_line_edit->setText("C:\\Games\\FreespaceOpen\\FS2\\BtA-2.0.0");
+    ui.directory_line_edit->setText("C:\\Games\\FreespaceOpen\\FS2\\BtA-2.0.0\\bta_core\\data\\config");
     ui.offset_line_edit->setText("0");
     add_regex_row("XSTR\\(\"([^\"]+)\",\\s*(-?\\d+)\\)", "1", "2");
     add_regex_row("([a-zA-Z0-9_]+)\\s*=\\s*\\{\\s*\"([^\"]+)\",\\s*(-?\\d+)\\}", "2", "3");
@@ -39,6 +39,10 @@ Etemenanki::Etemenanki(QWidget *parent)
 
     auto function = std::bind(&Etemenanki::runXSTR, this);
     XSTR_thread = QThread::create(function);
+
+    connect(XSTR_thread, &QThread::finished, this, [this]() {
+        ui.actionExit->setEnabled(true);
+        });
 }
 
 bool itemExists(QListWidget* listWidget, const QString& textToCheck) {
