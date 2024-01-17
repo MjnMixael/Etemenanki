@@ -20,8 +20,8 @@ void XstrProcessor::setInputPath(std::string path) {
 }
 
 void XstrProcessor::setOutputFilepath(std::string path) {
-    if (!path.empty() && path.back() != '/') {
-        path += '/';
+    if (!path.empty() && path.back() != '\\') {
+        path += '\\';
     }
     Output_filepath = path;
 }
@@ -133,6 +133,14 @@ void XstrProcessor::processFile(const fs::path& filePath) {
     if (!continueProcessing) {
         return;
     }
+
+    // Skip the file if it is our output file
+    std::string thisPath = filePath.string();
+    std::string outputPath = Output_filepath + Output_filename;
+    if (thisPath == outputPath) {
+        return;
+    }
+
     std::ifstream inputFile(filePath);
     if (!inputFile.is_open()) {
         std::string msg = "Error opening file: " + filePath.string();

@@ -68,6 +68,8 @@ private:
     void loadSettings();
     void saveSettings();
 
+    void resetInterface();
+
     // Default values
     QString defaultOutputFile = "tstrings.tbl";
     QString defaultOutputDirectory = "";

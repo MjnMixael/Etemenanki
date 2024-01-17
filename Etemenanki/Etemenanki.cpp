@@ -60,19 +60,22 @@ void Etemenanki::uiOpenDocumentation() {
 void Etemenanki::closeEvent(QCloseEvent* event) {
     if (xstrProcessor->isRunning()) {
         continueProcessing = false;
-
-        ui.begin_button->setEnabled(false);
-        ui.begin_button->setText("Waiting...");
-
-        XSTR_thread->wait();
-        delete XSTR_thread;
-
-        ui.begin_button->setText("Run");
-        ui.begin_button->setEnabled(true);
-        toggleControls(true);
+        resetInterface();
     }
 
     saveSettings();
+}
+
+void Etemenanki::resetInterface() {
+    ui.begin_button->setEnabled(false);
+    ui.begin_button->setText("Waiting...");
+
+    XSTR_thread->wait();
+    delete XSTR_thread;
+
+    ui.begin_button->setText("Run");
+    ui.begin_button->setEnabled(true);
+    toggleControls(true);
 }
 
 bool itemExists(QListWidget* listWidget, const QString& textToCheck) {
@@ -240,16 +243,7 @@ void Etemenanki::on_regex_table_widget_clicked() {
 void Etemenanki::on_begin_button_clicked() {
     if (xstrProcessor->isRunning()) {
         continueProcessing = false;
-
-        ui.begin_button->setEnabled(false);
-        ui.begin_button->setText("Waiting...");
-
-        XSTR_thread->wait();
-        delete XSTR_thread;
-
-        ui.begin_button->setText("Run");
-        ui.begin_button->setEnabled(true);
-        toggleControls(true);
+        resetInterface();
         return;
     }
 
@@ -310,7 +304,8 @@ void Etemenanki::on_begin_button_clicked() {
     XSTR_thread = QThread::create(function);
 
     connect(XSTR_thread, &QThread::finished, this, [this]() {
-        ui.actionExit->setEnabled(true);
+        continueProcessing = false;
+        resetInterface();
         });
 
     XSTR_thread->start();
@@ -338,7 +333,6 @@ void Etemenanki::toggleControls(bool val) {
     ui.replace_radio_button->setEnabled(val);
     ui.output_directory_line_edit->setEnabled(val);
     ui.output_file_line_edit->setEnabled(val);
-    ui.actionExit->setEnabled(val);
 }
 
 void Etemenanki::updateTerminalOutput(const QString& text) {
@@ -394,8 +388,10 @@ void Etemenanki::loadSettings() {
 
 void Etemenanki::saveSettings() {
     QFile file(SettingsFileName);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        updateTerminalOutput("Saving failed. Couldn't open save file...");
         return;
+    }
 
     QJsonObject settings;
     settings["outputFile"] = ui.output_file_line_edit->text();
@@ -423,4 +419,5 @@ void Etemenanki::saveSettings() {
     QJsonDocument doc(settings);
     file.write(doc.toJson());
     file.close();
+    updateTerminalOutput("Settings saved!");
 }
