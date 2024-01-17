@@ -10,6 +10,14 @@ Etemenanki::Etemenanki(QWidget *parent)
 {
     ui.setupUi(this);
 
+    setWindowFlags(Qt::Window | Qt::MSWindowsFixedSizeDialogHint);
+
+    setWindowTitle("Etemenanki - A translation tool for FreespaceOpen!");
+
+    SettingsFileName = AppDataPath + "settings.json";
+    LogFileName = AppDataPath + "Etemenanki.log";
+
+    // Set some ui configurations
     ui.offset_line_edit->setValidator(new QIntValidator(0, 9999999, this));
     ui.position_string_line_edit->setValidator(new QIntValidator(0, 9, this));
     ui.position_id_line_edit->setValidator(new QIntValidator(0, 9, this));
@@ -17,21 +25,8 @@ Etemenanki::Etemenanki(QWidget *parent)
     ui.regex_table_widget->setColumnWidth(1, (ui.regex_table_widget->width() - 500 - 2)/2);
     ui.regex_table_widget->setColumnWidth(2, (ui.regex_table_widget->width() - 500 - 2) / 2);
 
-    // Default values
-    ui.output_line_edit->setText("tstrings.tbl");
-    ui.directory_line_edit->setText("C:\\Games\\FreespaceOpen\\FS2\\BtA-2.0.0\\bta_core\\data\\config");
-    ui.offset_line_edit->setText("0");
-    add_regex_row("XSTR\\(\"([^\"]+)\",\\s*(-?\\d+)\\)", "1", "2");
-    add_regex_row("([a-zA-Z0-9_]+)\\s*=\\s*\\{\\s*\"([^\"]+)\",\\s*(-?\\d+)\\}", "2", "3");
-    add_regex_row("utils\\.xstr\\(\\{\\s*\"([^\"]+)\",\\s*(-?\\d+)\\}\\)", "1","2");
-    add_regex_row("\\+Val:\\s*([a-zA-Z0-9_]+)\\s*\\(\\s*\"([^\"]+)\",\\s*(-?\\d+)\\)", "2","3");
-    add_regex_row("\\[\"([^\"]+)\",\\s*(-?\\d+)\\]", "1","2");
-    ui.files_list_widget->addItem(".tbl");
-    ui.files_list_widget->addItem(".tbm");
-    ui.files_list_widget->addItem(".fs2");
-    ui.files_list_widget->addItem(".fc2");
-    ui.files_list_widget->addItem(".lua");
-    ui.files_list_widget->addItem(".cfg");
+    // Load user settings and/or defaults
+    loadSettings();
 
     // Disable buttons
     ui.regex_update_button->setEnabled(false);
@@ -39,12 +34,23 @@ Etemenanki::Etemenanki(QWidget *parent)
     ui.files_update_button->setEnabled(false);
     ui.files_remove_button->setEnabled(false);
 
+    //Create the processor thread
     xstrProcessor = new XstrProcessor(this);
     connect(xstrProcessor, &XstrProcessor::updateTerminalText, this, &Etemenanki::updateTerminalOutput);
+
+    xstrProcessor->setLogFilePath(LogFileName);
 }
 
 void Etemenanki::runXSTR() {
     xstrProcessor->run();
+}
+
+void Etemenanki::uiSaveSettings() {
+    saveSettings();
+}
+
+void Etemenanki::uiOpenDocumentation() {
+    QDesktopServices::openUrl(Github);
 }
 
 bool itemExists(QListWidget* listWidget, const QString& textToCheck) {
@@ -57,9 +63,7 @@ bool itemExists(QListWidget* listWidget, const QString& textToCheck) {
     return false;  // Item does not exist
 }
 
-void Etemenanki::on_files_add_button_clicked() {
-    QString ext = ui.files_line_edit->text();
-
+void Etemenanki::add_file_extension(QString ext) {
     if (ext.at(0) != ".") {
         ext.prepend(".");
     }
@@ -67,6 +71,12 @@ void Etemenanki::on_files_add_button_clicked() {
     if (!itemExists(ui.files_list_widget, ext)) {
         ui.files_list_widget->addItem(ext);
     }
+}
+
+void Etemenanki::on_files_add_button_clicked() {
+    QString ext = ui.files_line_edit->text();
+
+    add_file_extension(ext);
 
     ui.files_line_edit->clear();
     updateTerminalOutput("New file extension added!");
@@ -225,7 +235,8 @@ void Etemenanki::on_begin_button_clicked() {
     
     // Get values from UI
     QString directory = ui.directory_line_edit->text();
-    QString output = ui.output_line_edit->text();
+    QString outputFile = ui.output_file_line_edit->text();
+    QString outputDirectory = ui.output_directory_line_edit->text();
     QString offset = ui.offset_line_edit->text();
     bool replace = ui.replace_radio_button->isChecked();
 
@@ -235,9 +246,9 @@ void Etemenanki::on_begin_button_clicked() {
         return;
     }
 
-    if (output.isEmpty()) {
+    if (outputFile.isEmpty()) {
         ui.terminal_output->setText("Output not provided. Using default!");
-        output = "tstrings.tbl";
+        outputFile = "tstrings.tbl";
         return;
     }
 
@@ -249,7 +260,8 @@ void Etemenanki::on_begin_button_clicked() {
     
     // Set internal values
     xstrProcessor->setInputPath(directory.toStdString());
-    xstrProcessor->setOutputFilename(output.toStdString());
+    xstrProcessor->setOutputFilepath(outputDirectory.toStdString());
+    xstrProcessor->setOutputFilename(outputFile.toStdString());
     xstrProcessor->setOffset(offset.toInt());
 
     for (int i = 0; i < ui.files_list_widget->count(); ++i) {
@@ -267,6 +279,9 @@ void Etemenanki::on_begin_button_clicked() {
 
         xstrProcessor->addRegexPattern(pattern, pos, id, i);
     }
+
+    saveSettings();
+
     qDebug() << "Processing in thread:" << QThread::currentThreadId();
 
     auto function = std::bind(&Etemenanki::runXSTR, this);
@@ -299,10 +314,91 @@ void Etemenanki::toggleControls(bool val) {
     ui.regex_remove_button->setEnabled(val);
     ui.offset_line_edit->setEnabled(val);
     ui.replace_radio_button->setEnabled(val);
-    ui.output_line_edit->setEnabled(val);
+    ui.output_directory_line_edit->setEnabled(val);
+    ui.output_file_line_edit->setEnabled(val);
     ui.actionExit->setEnabled(val);
 }
 
 void Etemenanki::updateTerminalOutput(const QString& text) {
     ui.terminal_output->setText(text);
+}
+
+void Etemenanki::loadSettings() {
+    QDir().mkpath(QFileInfo(SettingsFileName).absolutePath()); // Ensure the directory exists
+    QFile file(SettingsFileName);
+    
+    QJsonObject settings = {};
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QJsonDocument doc(QJsonDocument::fromJson(file.readAll()));
+        settings = doc.object();
+    }  
+    
+    ui.output_file_line_edit->setText(settings.value("outputFile").toString(defaultOutputFile));
+    ui.output_directory_line_edit->setText(settings.value("outputDirectory").toString(defaultOutputDirectory));
+    ui.directory_line_edit->setText(settings["directory"].toString());
+    ui.offset_line_edit->setText(settings.value("offset").toString(defaultOffset));
+    ui.replace_radio_button->setChecked(settings.value("replaceValues").toBool(defaultReplacement));
+
+    ui.files_list_widget->clear(); // Clear existing items before loading
+    QJsonArray extensionsArray;
+    if (settings.contains("file_extensions")) {
+        extensionsArray = settings["file_extensions"].toArray();
+    }
+    else {
+        for (const QString& ext : defaultExtensions) {
+            extensionsArray.append(ext);
+        }
+    }
+
+    for (const QJsonValue& value : extensionsArray) {
+        add_file_extension(value.toString());
+    }
+
+    QJsonArray regexArray;
+    if (settings.contains("regex_rules")) {
+        regexArray = settings["regex_rules"].toArray();
+    }
+    else {
+        regexArray.append(defaultRegex());
+    }
+
+    foreach(const QJsonValue & value, regexArray) {
+        QJsonObject regexItem = value.toObject();
+        add_regex_row(regexItem["regex_string"].toString(), QString::number(regexItem["string_position"].toInt()), QString::number(regexItem["id_position"].toInt()));
+    }
+
+    file.close();
+}
+
+void Etemenanki::saveSettings() {
+    QFile file(SettingsFileName);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        return;
+
+    QJsonObject settings;
+    settings["outputFile"] = ui.output_file_line_edit->text();
+    settings["outputDirectory"] = ui.output_directory_line_edit->text();
+    settings["directory"] = ui.directory_line_edit->text();
+    settings["offset"] = ui.offset_line_edit->text();
+    settings["replaceValues"] = ui.replace_radio_button->isChecked();
+
+    QJsonArray extensionsArray;
+    for (int i = 0; i < ui.files_list_widget->count(); ++i) {
+        extensionsArray.append(ui.files_list_widget->item(i)->text());
+    }
+    settings["file_extensions"] = extensionsArray;
+
+    QJsonArray regexArray;
+    for (int i = 0; i < ui.regex_table_widget->rowCount(); ++i) {
+        QJsonObject regexItem;
+        regexItem["regex_string"] = ui.regex_table_widget->item(i, 0)->text();
+        regexItem["string_position"] = ui.regex_table_widget->item(i, 1)->text().toInt();
+        regexItem["id_position"] = ui.regex_table_widget->item(i, 2)->text().toInt();
+        regexArray.append(regexItem);
+    }
+    settings["regex_rules"] = regexArray;
+
+    QJsonDocument doc(settings);
+    file.write(doc.toJson());
+    file.close();
 }

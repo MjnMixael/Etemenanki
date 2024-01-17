@@ -1,6 +1,14 @@
 #pragma once
 
 #include <QtWidgets/QMainWindow>
+#include <QDir>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonValue>
+#include <QJsonArray>
+#include <QStandardPaths>
+#include <QDesktopServices>
 #include "ui_Etemenanki.h"
 #include "xstr.h"
 
@@ -29,11 +37,35 @@ public slots:
 
     void runXSTR();
 
+    void uiSaveSettings();
+    void uiOpenDocumentation();
+
 private:
     Ui::EtemenankiClass ui;
     XstrProcessor* xstrProcessor;
     QThread* processor;
+    QString AppDataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/Etemenanki/";
+    QString SettingsFileName;
+    QString LogFileName;
+    QUrl Github = "https://github.com/MjnMixael/Etemenanki";
 
     void toggleControls(bool val);
     bool add_regex_row(QString pattern, QString string_pos, QString id_pos, int row = -1);
+    void add_file_extension(QString ext);
+    void loadSettings();
+    void saveSettings();
+
+    // Default values
+    QString defaultOutputFile = "tstrings.tbl";
+    QString defaultOutputDirectory = "";
+    QString defaultOffset = "0";
+    bool defaultReplacement = false;
+    QStringList defaultExtensions = { ".tbl", ".tbm", ".fs2", ".fc2" };
+    QJsonObject defaultRegex() {
+        QJsonObject obj;
+        obj["regex_string"] = "XSTR\\(\"([^\"]+)\",\\s*(-?\\d+)\\)";
+        obj["string_position"] = 1;
+        obj["id_position"] = 2;
+        return obj;
+    }
 };

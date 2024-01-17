@@ -24,9 +24,11 @@ public:
     // Public methods
     void setTerminalText(const std::string& text);
     void setInputPath(std::string path);
+    void setOutputFilepath(std::string path);
     void setOutputFilename(std::string file);
     void setReplaceExisting(bool val);
     void setOffset(int val);
+    void setLogFilePath(QString path);
 
     void clearVectors();
 
@@ -45,6 +47,7 @@ public:
         std::string pattern_string;
     };
 
+    std::string Output_filepath;
     std::string Output_filename;
     int Offset = 0;
     bool Replace_existing = false;
@@ -77,5 +80,6 @@ private:
     std::vector<xstrPair> XSTR_list;
     int Counter = 0;
     std::ofstream Output_file;
+    std::string LogFilePath;
     std::ofstream Log_file;
 };

@@ -4,8 +4,19 @@ bool XstrProcessor::isRunning() {
     return continueProcessing == true;
 }
 
+void XstrProcessor::setLogFilePath(QString path) {
+    LogFilePath = path.toStdString();
+}
+
 void XstrProcessor::setInputPath(std::string path) {
     Input_path = path;
+}
+
+void XstrProcessor::setOutputFilepath(std::string path) {
+    if (!path.empty() && path.back() != '/') {
+        path += '/';
+    }
+    Output_filepath = path;
 }
 
 void XstrProcessor::setOutputFilename(std::string file) {
@@ -247,7 +258,7 @@ void XstrProcessor::processDirectory(const fs::path& directoryPath) {
 }
 
 void XstrProcessor::run() {
-    Log_file.open("Etemenanki.log");
+    Log_file.open(LogFilePath);
     if (!Log_file.is_open()) {
         logEntry("Error creating log file!");
         Log_file.close();
@@ -255,7 +266,9 @@ void XstrProcessor::run() {
         return;
     }
 
-    Output_file.open(Output_filename);
+    std::string fullPath = Output_filepath + Output_filename;
+
+    Output_file.open(fullPath);
 
     fs::path directoryPath = Input_path;
     if (!fs::is_directory(directoryPath)) {
@@ -265,7 +278,6 @@ void XstrProcessor::run() {
     }
 
     if (!Output_file.is_open()) {
-        std::cerr << "Error creating output file." << std::endl;
         logEntry("Error creating output file!");
         Output_file.close();
         continueProcessing = false;
@@ -276,7 +288,7 @@ void XstrProcessor::run() {
     logEntry("Initializing settings...", false);
     std::string thisPath = "Directory: " + Input_path;
     logEntry(thisPath, false);
-    std::string thisFile = "Output File: " + Output_filename;
+    std::string thisFile = "Output File: " + fullPath;
     logEntry(thisFile, false);
     std::string thisOffset = "Starting new XSTR IDs at " + Offset;
     logEntry(thisOffset, false);
