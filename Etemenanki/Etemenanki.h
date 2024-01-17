@@ -1,9 +1,6 @@
 #pragma once
 
 #include <QtWidgets/QMainWindow>
-#include <QThread>
-#include <QTimer>
-#include <QObject>
 #include "ui_Etemenanki.h"
 #include "xstr.h"
 
@@ -29,10 +26,12 @@ public slots:
 
     void on_begin_button_clicked();
 
-    void runXSTR();
-
     void updateTerminalOutput(const QString& text);
+
+    void runXSTR();
 
 private:
     Ui::EtemenankiClass ui;
+    XstrProcessor* xstrProcessor;
+    QThread* processor;
 };

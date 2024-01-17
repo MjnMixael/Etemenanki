@@ -5,48 +5,76 @@
 #include <fstream>
 #include <filesystem>
 #include <regex>
+#include <atomic>
 
-#include "Etemenanki.h"
+#include <QThread>
+#include <QTimer>
+#include <QObject>
+#include <qdebug.h>
 
-// Define a helper QObject class for signaling
-class XstrSignalHelper : public QObject {
+namespace fs = std::filesystem;
+
+class XstrProcessor : public QObject {
     Q_OBJECT
 
 public:
-    XstrSignalHelper(QObject* parent = nullptr) : QObject(parent) {}
+    XstrProcessor(QObject* parent = nullptr) : QObject(parent) {}
+
+    // Public methods
+    void setTerminalText(const std::string& text);
+    void setInputPath(std::string path);
+    void setOutputFilename(std::string file);
+    void setReplaceExisting(bool val);
+    void setOffset(int val);
+
+    void clearVectors();
+
+    void addFileExtension(std::string ext);
+    void addRegexPattern(std::string pattern, int string_pos, int id_pos, int idx);
+
+    bool isRunning();
+
+    int run();
+
+    std::atomic<bool> continueProcessing;
+
+    struct regexPattern {
+        std::regex pattern;
+        int string_position;
+        int id_position;
+        int idx;
+        std::string pattern_string;
+    };
+
+    std::string Output_filename;
+    int Offset = 0;
+    bool Replace_existing = false;
+    std::vector<std::string> Valid_extensions;
+    std::vector<regexPattern> Valid_patterns;
+    std::string Input_path;
 
 signals:
     void updateTerminalText(const QString& text);
+
+public slots:
+    //
+
+private:
+    void processDirectory(const fs::path& directoryPath);
+    bool isExtensionValid(std::string extension);
+    void processFile(const fs::path& filePath);
+    int getXSTR(std::string line);
+    bool hasInvalidID(std::string line, int id);
+    int getExistingXSTR(std::string line);
+    std::string replacePattern(const std::string& input, const std::string& somestring, int counter);
+    int savePair(std::string line, int id);
+
+    struct xstrPair {
+        int id;
+        std::string text;
+    };
+
+    std::vector<xstrPair> XSTR_list;
+    int Counter = 0;
+    std::ofstream Output_file;
 };
-
-extern XstrSignalHelper* xstrSignalHelper;
-
-// Xstr variables
-
-struct xstrPair {
-    int id;
-    std::string text;
-};
-
-struct regexPattern {
-    std::regex pattern;
-    int string_position;
-    int id_position;
-    int idx;
-    std::string pattern_string;
-};
-
-extern std::atomic<bool> continueProcessing;
-
-extern std::string Output_filename;
-
-extern int Offset;
-extern bool Replace_existing;
-
-extern std::vector<std::string> Valid_extensions;
-
-extern std::vector<regexPattern> Valid_patterns;
-
-extern std::string Input_path;
-
-int run();

@@ -1,34 +1,52 @@
 #include "xstr.h"
 
-namespace fs = std::filesystem;
-
-std::atomic<bool> continueProcessing = true;
-
-XstrSignalHelper* xstrSignalHelper = nullptr;
-
-int Counter = 0;
-
-int Offset = 0;
-bool Replace_existing = false;
-
-std::string Output_filename;
-
-std::vector<xstrPair> XSTR_list;
-
-std::ofstream Output_file;
-
-std::vector<std::string> Valid_extensions;
-
-std::vector<regexPattern> Valid_patterns;
-
-std::string Input_path;
-
-void setTerminalText(std::string text) {
-    QString msg = QString::fromStdString(text);
-    emit xstrSignalHelper->updateTerminalText(msg);
+bool XstrProcessor::isRunning() {
+    return continueProcessing.load();
 }
 
-int savePair(std::string line, int id) {
+void XstrProcessor::setInputPath(std::string path) {
+    Input_path = path;
+}
+
+void XstrProcessor::setOutputFilename(std::string file) {
+    Output_filename = file;
+}
+
+void XstrProcessor::setReplaceExisting(bool val) {
+    Replace_existing = val;
+}
+
+void XstrProcessor::setOffset(int val) {
+    Offset = val;
+}
+
+void XstrProcessor::clearVectors() {
+    Valid_extensions.clear();
+    Valid_patterns.clear();
+}
+
+void XstrProcessor::addFileExtension(std::string ext) {
+    Valid_extensions.push_back(ext);
+}
+void XstrProcessor::addRegexPattern(std::string pattern, int string_pos, int id_pos, int idx) {
+    std::regex reg;
+    try {
+        reg.assign(pattern);
+    }
+    catch (const std::regex_error& e) {
+        std::cerr << "Regex error: " << e.what() << std::endl;
+        return;
+    }
+    regexPattern thisPattern = { reg, string_pos, id_pos, idx, pattern };
+    Valid_patterns.push_back(thisPattern);
+}
+
+void XstrProcessor::setTerminalText(const std::string &text) {
+    QString msg = QString::fromStdString(text);
+    emit updateTerminalText(msg);
+}
+
+int XstrProcessor::savePair(std::string line, int id) {
     xstrPair newPair = { id, line };
     XSTR_list.push_back(newPair);
     Output_file << newPair.id << ", \"" << newPair.text << "\"" << std::endl;
@@ -36,7 +54,7 @@ int savePair(std::string line, int id) {
     return newPair.id;
 }
 
-std::string replacePattern(const std::string& input, const std::string& somestring, int counter) {
+std::string XstrProcessor::replacePattern(const std::string& input, const std::string& somestring, int counter) {
     std::regex pattern("\"([^\"]+)\",\\s*(-?\\d+)");
     std::smatch match;
 
@@ -48,7 +66,7 @@ std::string replacePattern(const std::string& input, const std::string& somestri
     return input;
 }
 
-int getExistingXSTR(std::string line) {
+int XstrProcessor::getExistingXSTR(std::string line) {
     for (auto& pair : XSTR_list) {
         if (pair.text == line) {
             return pair.id;
@@ -58,7 +76,7 @@ int getExistingXSTR(std::string line) {
     return -1;
 }
 
-bool hasInvalidID(std::string line, int id) {
+bool XstrProcessor::hasInvalidID(std::string line, int id) {
     for (auto& pair : XSTR_list) {
         if (pair.id == id) {
             if (pair.text != line) {
@@ -72,7 +90,7 @@ bool hasInvalidID(std::string line, int id) {
     return false;
 }
 
-int getXSTR(std::string line) {
+int XstrProcessor::getXSTR(std::string line) {
     int id = getExistingXSTR(line);
 
     if (id >= 0) {
@@ -84,7 +102,7 @@ int getXSTR(std::string line) {
     return savePair(line, id);
 }
 
-void processFile(const fs::path& filePath) {
+void XstrProcessor::processFile(const fs::path& filePath) {
     if (!continueProcessing.load()) {
         return;
     }
@@ -192,7 +210,7 @@ void processFile(const fs::path& filePath) {
 }
 
 
-bool isExtensionValid(std::string extension) {
+bool XstrProcessor::isExtensionValid(std::string extension) {
     for (auto ext : Valid_extensions) {
         if (extension == ext) {
             return true;
@@ -202,7 +220,7 @@ bool isExtensionValid(std::string extension) {
     return false;
 }
 
-void processDirectory(const fs::path& directoryPath) {
+void XstrProcessor::processDirectory(const fs::path& directoryPath) {
     setTerminalText(Input_path);
     for (const auto& entry : fs::recursive_directory_iterator(directoryPath)) {
         if (!continueProcessing.load()) {
@@ -219,8 +237,10 @@ void processDirectory(const fs::path& directoryPath) {
     }
 }
 
-int run() {
+int XstrProcessor::run() {
     setTerminalText("Running!");
+
+    continueProcessing.store(true);
 
     Output_file.open(Output_filename);
 

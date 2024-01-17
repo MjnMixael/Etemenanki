@@ -6,9 +6,6 @@ Etemenanki::Etemenanki(QWidget *parent)
 {
     ui.setupUi(this);
 
-    xstrSignalHelper = new XstrSignalHelper();
-    connect(xstrSignalHelper, &XstrSignalHelper::updateTerminalText, this, &Etemenanki::updateTerminalOutput);
-
     ui.offset_line_edit->setValidator(new QIntValidator(0, 9999999, this));
     ui.position_string_line_edit->setValidator(new QIntValidator(0, 9, this));
     ui.position_id_line_edit->setValidator(new QIntValidator(0, 9, this));
@@ -38,12 +35,19 @@ Etemenanki::Etemenanki(QWidget *parent)
     ui.files_update_button->setEnabled(false);
     ui.files_remove_button->setEnabled(false);
 
+    xstrProcessor = new XstrProcessor(this);
+    connect(xstrProcessor, &XstrProcessor::updateTerminalText, this, &Etemenanki::updateTerminalOutput);
+
     auto function = std::bind(&Etemenanki::runXSTR, this);
     XSTR_thread = QThread::create(function);
 
     connect(XSTR_thread, &QThread::finished, this, [this]() {
         ui.actionExit->setEnabled(true);
         });
+}
+
+void Etemenanki::runXSTR() {
+    xstrProcessor->run();
 }
 
 bool itemExists(QListWidget* listWidget, const QString& textToCheck) {
@@ -188,13 +192,12 @@ void Etemenanki::on_regex_table_widget_clicked() {
 }
 
 void Etemenanki::on_begin_button_clicked() {
-    if (XSTR_thread->isRunning()) {
-        continueProcessing.store(false);
+    if (xstrProcessor->isRunning()) {
+        xstrProcessor->continueProcessing.store(false);
         ui.begin_button->setText("Run");
     }
 
-    Valid_extensions.clear();
-    Valid_patterns.clear();
+    xstrProcessor->clearVectors();
     
     // Get values from UI
     QString directory = ui.directory_line_edit->text();
@@ -219,15 +222,15 @@ void Etemenanki::on_begin_button_clicked() {
         offset = "1";
         return;
     }
-
+    
     // Set internal values
-    Input_path = directory.toStdString();
-    Offset = offset.toInt();
-    Output_filename = output.toStdString();
+    xstrProcessor->setInputPath(directory.toStdString());
+    xstrProcessor->setOutputFilename(output.toStdString());
+    xstrProcessor->setOffset(offset.toInt());
 
     for (int i = 0; i < ui.files_list_widget->count(); ++i) {
         std::string ext = ui.files_list_widget->item(i)->text().toStdString();
-        Valid_extensions.push_back(ext);
+        xstrProcessor->addFileExtension(ext);
     }
 
     for (int i = 0; i < ui.regex_table_widget->rowCount(); ++i) {
@@ -235,20 +238,13 @@ void Etemenanki::on_begin_button_clicked() {
         std::string string_pos = ui.regex_table_widget->item(i, 1)->text().toStdString();
         std::string id_pos = ui.regex_table_widget->item(i, 2)->text().toStdString();
 
-        std::regex reg;
         int pos = std::stoi(string_pos);
         int id = std::stoi(id_pos);
-        try {
-            reg.assign(pattern);
-        }
-        catch (const std::regex_error& e) {
-            std::cerr << "Regex error: " << e.what() << std::endl;
-        }
 
-        regexPattern thisPattern = { reg, pos, id, i, pattern };
-        Valid_patterns.push_back(thisPattern);
+        xstrProcessor->addRegexPattern(pattern, pos, id, i);
     }
-
+    qDebug() << "Processing in thread:" << QThread::currentThreadId();
+    //xstrProcessor->startProcessing();
     XSTR_thread->start();
 
     ui.begin_button->setText("Terminate");
@@ -270,10 +266,6 @@ void Etemenanki::on_begin_button_clicked() {
     ui.replace_radio_button->setEnabled(false);
     ui.output_line_edit->setEnabled(false);
     ui.actionExit->setEnabled(false);
-}
-
-void Etemenanki::runXSTR() {
-    run();
 }
 
 void Etemenanki::updateTerminalOutput(const QString& text) {
