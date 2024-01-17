@@ -63,6 +63,18 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <PostBuildEvent>
+      <Command>xcopy /y "C:\Qt\5.15.2\msvc2019_64\bin\Qt5Core.dll" "$(OutDir)"
+xcopy /y "C:\Qt\5.15.2\msvc2019_64\bin\Qt5Gui.dll" "$(OutDir)"
+xcopy /y "C:\Qt\5.15.2\msvc2019_64\bin\Qt5Widgets.dll" "$(OutDir)"
+xcopy /y "C:\Qt\5.15.2\msvc2019_64\plugins\platforms\qwindows.dll" "$(OutDir)platforms\" &amp;&amp; if not exist "$(OutDir)platforms\" mkdir "$(OutDir)platforms"
+</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
     <ClCompile>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
