@@ -1,7 +1,7 @@
 #include "xstr.h"
 
 bool XstrProcessor::isRunning() {
-    return continueProcessing.load();
+    return continueProcessing == true;
 }
 
 void XstrProcessor::setInputPath(std::string path) {
@@ -34,7 +34,7 @@ void XstrProcessor::addRegexPattern(std::string pattern, int string_pos, int id_
         reg.assign(pattern);
     }
     catch (const std::regex_error& e) {
-        std::cerr << "Regex error: " << e.what() << std::endl;
+        //std::cerr << "Regex error: " << e.what() << std::endl;
         return;
     }
     regexPattern thisPattern = { reg, string_pos, id_pos, idx, pattern };
@@ -44,6 +44,15 @@ void XstrProcessor::addRegexPattern(std::string pattern, int string_pos, int id_
 void XstrProcessor::setTerminalText(const std::string &text) {
     QString msg = QString::fromStdString(text);
     emit updateTerminalText(msg);
+}
+
+void XstrProcessor::logEntry(const std::string& text, bool update_terminal) {
+    if (Log_file.is_open()) {
+        Log_file << text << std::endl;
+    }
+    if (update_terminal) {
+        setTerminalText(text);
+    }
 }
 
 int XstrProcessor::savePair(std::string line, int id) {
@@ -103,7 +112,7 @@ int XstrProcessor::getXSTR(std::string line) {
 }
 
 void XstrProcessor::processFile(const fs::path& filePath) {
-    if (!continueProcessing.load()) {
+    if (!continueProcessing) {
         return;
     }
     std::ifstream inputFile(filePath);
@@ -119,13 +128,13 @@ void XstrProcessor::processFile(const fs::path& filePath) {
 
     // Print to the terminal
     std::string msg = "Processing file: " + filePath.filename().string();
-    setTerminalText(msg);
+    logEntry(msg);
 
     std::string line;
     while (std::getline(inputFile, line)) {
         for (const auto& set : Valid_patterns) {
             std::smatch match;
-            if (std::regex_search(line, match, set.pattern)) {
+            if (continueProcessing && std::regex_search(line, match, set.pattern)) {
 
                 if (!found) {
                     found = true;
@@ -136,7 +145,7 @@ void XstrProcessor::processFile(const fs::path& filePath) {
 
                     // Print to the terminal
                     msg = "Found XSTR matches using pattern \"" + set.pattern_string + "\"";
-                    //setTerminalText(msg);
+                    logEntry(msg, false);
                 }
 
                 std::string somestring = match[set.string_position].str();
@@ -148,24 +157,24 @@ void XstrProcessor::processFile(const fs::path& filePath) {
                 }
                 catch (const std::invalid_argument& e) {
                     std::string error = e.what();
-                    msg = "Invalid argument: " + error;
-                    //setTerminalText(msg);
+                    msg = "Xstr conversion invalid argument: " + error + ". Using -1.";
+                    logEntry(msg, false);
                     id = -1;
                 }
                 catch (const std::out_of_range& e) {
                     std::string error = e.what();
-                    msg = "Out of range: " + error;
-                    //setTerminalText(msg);
+                    msg = "Xstr id is out of range: " + error + ". Using -1.";
+                    logEntry(msg, false);
                     id = -1;
                 }
                 catch (...) {
-                    //setTerminalText("An unknown error occurred.");
+                    logEntry("Unknown error occurred getting xstr id. Using -1.", false);
                     id = -1;
                 }
 
                 if (id >= 0) {
-                    msg = "Existing Integer in line: " + id;
-                    //setTerminalText(msg);
+                    msg = "Existing Integer in line: " + std::to_string(id);
+                    logEntry(msg, false);
                 }
 
                 // Check for invalid duplicate IDs
@@ -197,7 +206,7 @@ void XstrProcessor::processFile(const fs::path& filePath) {
         std::ofstream outputFile(filePath, std::ofstream::trunc);
         if (!outputFile.is_open()) {
             msg = "Error saving file: " + filePath.string();
-            //setTerminalText(msg);
+            logEntry(msg, false);
             return;
         }
 
@@ -206,7 +215,7 @@ void XstrProcessor::processFile(const fs::path& filePath) {
     }
 
     msg = "Processing completed for file: " + filePath.string();
-    //setTerminalText(msg);
+    logEntry(msg, false);
 }
 
 
@@ -223,7 +232,7 @@ bool XstrProcessor::isExtensionValid(std::string extension) {
 void XstrProcessor::processDirectory(const fs::path& directoryPath) {
     setTerminalText(Input_path);
     for (const auto& entry : fs::recursive_directory_iterator(directoryPath)) {
-        if (!continueProcessing.load()) {
+        if (!continueProcessing) {
             return;
         }
         if (entry.is_regular_file()) {
@@ -237,35 +246,70 @@ void XstrProcessor::processDirectory(const fs::path& directoryPath) {
     }
 }
 
-int XstrProcessor::run() {
-    setTerminalText("Running!");
-
-    continueProcessing.store(true);
+void XstrProcessor::run() {
+    Log_file.open("Etemenanki.log");
+    if (!Log_file.is_open()) {
+        logEntry("Error creating log file!");
+        Log_file.close();
+        continueProcessing = false;
+        return;
+    }
 
     Output_file.open(Output_filename);
 
     fs::path directoryPath = Input_path;
     if (!fs::is_directory(directoryPath)) {
-        std::cerr << "Invalid directory path." << std::endl;
-        return 1;
+        logEntry("Invalid directory path.");
+        continueProcessing = false;
+        return;
     }
 
     if (!Output_file.is_open()) {
         std::cerr << "Error creating output file." << std::endl;
+        logEntry("Error creating output file!");
         Output_file.close();
-        return 1;
+        continueProcessing = false;
+        return;
     }
+
+    // Log our settings for this run...
+    logEntry("Initializing settings...", false);
+    std::string thisPath = "Directory: " + Input_path;
+    logEntry(thisPath, false);
+    std::string thisFile = "Output File: " + Output_filename;
+    logEntry(thisFile, false);
+    std::string thisOffset = "Starting new XSTR IDs at " + Offset;
+    logEntry(thisOffset, false);
+    
+    logEntry("List of extensions:", false);
+    for (auto ext : Valid_extensions) {
+        logEntry(ext, false);
+    }
+
+    logEntry("List of regex pattern settings", false);
+    for (auto set : Valid_patterns) {
+        std::string s_pos = "++String position: " + set.string_position;
+        std::string i_pos = "++ID position: " + set.id_position;
+
+        logEntry(set.pattern_string, false);
+        logEntry(s_pos, false);
+        logEntry(i_pos, false);
+    }
+
+    continueProcessing = true;
+    logEntry("Running!", false);
 
     Output_file << "#default\n" << std::endl;
 
     processDirectory(directoryPath);
 
     Output_file << "\n#end" << std::endl;
-
     Output_file.close();
 
     std::string msg = "Processing completed. Output saved to " + Output_filename;
-    setTerminalText(msg);
+    logEntry(msg);
+    Log_file.close();
 
-    return 0;
+    continueProcessing = false;
+    return;
 }

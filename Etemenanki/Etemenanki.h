@@ -18,7 +18,6 @@ public slots:
     void on_files_remove_button_clicked();
     void on_files_list_widget_clicked();
 
-    bool add_regex_row(QString regex, QString string_pos, QString id_pos, int row = -1);
     void on_regex_add_button_clicked();
     void on_regex_update_button_clicked();
     void on_regex_remove_button_clicked();
@@ -34,4 +33,7 @@ private:
     Ui::EtemenankiClass ui;
     XstrProcessor* xstrProcessor;
     QThread* processor;
+
+    void toggleControls(bool val);
+    bool add_regex_row(QString pattern, QString string_pos, QString id_pos, int row = -1);
 };

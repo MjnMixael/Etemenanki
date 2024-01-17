@@ -5,7 +5,6 @@
 #include <fstream>
 #include <filesystem>
 #include <regex>
-#include <atomic>
 
 #include <QThread>
 #include <QTimer>
@@ -13,6 +12,8 @@
 #include <qdebug.h>
 
 namespace fs = std::filesystem;
+
+extern bool continueProcessing;
 
 class XstrProcessor : public QObject {
     Q_OBJECT
@@ -34,9 +35,7 @@ public:
 
     bool isRunning();
 
-    int run();
-
-    std::atomic<bool> continueProcessing;
+    void run();
 
     struct regexPattern {
         std::regex pattern;
@@ -68,6 +67,7 @@ private:
     int getExistingXSTR(std::string line);
     std::string replacePattern(const std::string& input, const std::string& somestring, int counter);
     int savePair(std::string line, int id);
+    void logEntry(const std::string& text, bool update_terminal = true);
 
     struct xstrPair {
         int id;
@@ -77,4 +77,5 @@ private:
     std::vector<xstrPair> XSTR_list;
     int Counter = 0;
     std::ofstream Output_file;
+    std::ofstream Log_file;
 };

@@ -1,6 +1,10 @@
 #include "Etemenanki.h"
 #include "xstr.h"
 
+#include <regex>
+
+bool continueProcessing = false;
+
 Etemenanki::Etemenanki(QWidget *parent)
     : QMainWindow(parent)
 {
@@ -37,13 +41,6 @@ Etemenanki::Etemenanki(QWidget *parent)
 
     xstrProcessor = new XstrProcessor(this);
     connect(xstrProcessor, &XstrProcessor::updateTerminalText, this, &Etemenanki::updateTerminalOutput);
-
-    auto function = std::bind(&Etemenanki::runXSTR, this);
-    XSTR_thread = QThread::create(function);
-
-    connect(XSTR_thread, &QThread::finished, this, [this]() {
-        ui.actionExit->setEnabled(true);
-        });
 }
 
 void Etemenanki::runXSTR() {
@@ -72,6 +69,7 @@ void Etemenanki::on_files_add_button_clicked() {
     }
 
     ui.files_line_edit->clear();
+    updateTerminalOutput("New file extension added!");
 }
 
 void Etemenanki::on_files_update_button_clicked() {
@@ -88,6 +86,7 @@ void Etemenanki::on_files_update_button_clicked() {
         ui.files_update_button->setEnabled(false);
         ui.files_remove_button->setEnabled(false);
         ui.files_list_widget->clearSelection();
+        updateTerminalOutput("File extension updated!");
     }
 }
 
@@ -97,6 +96,7 @@ void Etemenanki::on_files_remove_button_clicked() {
     ui.files_update_button->setEnabled(false);
     ui.files_remove_button->setEnabled(false);
     ui.files_list_widget->clearSelection();
+    updateTerminalOutput("File extension removed!");
 }
 
 void Etemenanki::on_files_list_widget_clicked() {
@@ -112,8 +112,8 @@ bool itemExists(QTableWidget* tableWidget, const QString& textToCheck) {
     return !items.isEmpty();  // If items list is not empty, the item exists
 }
 
-bool Etemenanki::add_regex_row(QString regex, QString string_pos, QString id_pos, int row) {
-    if (regex.isEmpty()) {
+bool Etemenanki::add_regex_row(QString pattern, QString string_pos, QString id_pos, int row) {
+    if (pattern.isEmpty()) {
         return false;
     }
 
@@ -125,17 +125,28 @@ bool Etemenanki::add_regex_row(QString regex, QString string_pos, QString id_pos
         id_pos = "2";
     }
 
+    // Try to validate the regex
+    std::regex reg;
+    try {
+        reg.assign(pattern.toStdString());
+    }
+    catch (const std::regex_error& e) {
+        //std::cerr << "Regex error: " << e.what() << std::endl;
+        updateTerminalOutput("Error validating regular expression!");
+        return false;
+    }
+
     if (row < 0) {
-        if (!itemExists(ui.regex_table_widget, regex)) {
+        if (!itemExists(ui.regex_table_widget, pattern)) {
             ui.regex_table_widget->insertRow(ui.regex_table_widget->rowCount());
-            ui.regex_table_widget->setItem(ui.regex_table_widget->rowCount() - 1, 0, new QTableWidgetItem(regex));
+            ui.regex_table_widget->setItem(ui.regex_table_widget->rowCount() - 1, 0, new QTableWidgetItem(pattern));
             ui.regex_table_widget->setItem(ui.regex_table_widget->rowCount() - 1, 1, new QTableWidgetItem(string_pos));
             ui.regex_table_widget->setItem(ui.regex_table_widget->rowCount() - 1, 2, new QTableWidgetItem(id_pos));
             return true;
         }
     }
     else {
-        ui.regex_table_widget->setItem(row, 0, new QTableWidgetItem(regex));
+        ui.regex_table_widget->setItem(row, 0, new QTableWidgetItem(pattern));
         ui.regex_table_widget->setItem(row, 1, new QTableWidgetItem(string_pos));
         ui.regex_table_widget->setItem(row, 2, new QTableWidgetItem(id_pos));
         return true;
@@ -153,6 +164,7 @@ void Etemenanki::on_regex_add_button_clicked() {
         ui.regex_line_edit->clear();
         ui.position_string_line_edit->clear();
         ui.position_id_line_edit->clear();
+        updateTerminalOutput("New regular expression added!");
     }
 }
 
@@ -169,6 +181,7 @@ void Etemenanki::on_regex_update_button_clicked() {
         ui.regex_update_button->setEnabled(false);
         ui.regex_remove_button->setEnabled(false);
         ui.regex_table_widget->clearSelection();
+        updateTerminalOutput("Regular expression updated!");
     }
 }
 
@@ -180,6 +193,7 @@ void Etemenanki::on_regex_remove_button_clicked() {
     ui.regex_update_button->setEnabled(false);
     ui.regex_remove_button->setEnabled(false);
     ui.regex_table_widget->clearSelection();
+    updateTerminalOutput("Regular expression removed!");
 }
 
 void Etemenanki::on_regex_table_widget_clicked() {
@@ -193,8 +207,18 @@ void Etemenanki::on_regex_table_widget_clicked() {
 
 void Etemenanki::on_begin_button_clicked() {
     if (xstrProcessor->isRunning()) {
-        xstrProcessor->continueProcessing.store(false);
+        continueProcessing = false;
+
+        ui.begin_button->setEnabled(false);
+        ui.begin_button->setText("Waiting...");
+
+        XSTR_thread->wait();
+        delete XSTR_thread;
+
         ui.begin_button->setText("Run");
+        ui.begin_button->setEnabled(true);
+        toggleControls(true);
+        return;
     }
 
     xstrProcessor->clearVectors();
@@ -244,28 +268,39 @@ void Etemenanki::on_begin_button_clicked() {
         xstrProcessor->addRegexPattern(pattern, pos, id, i);
     }
     qDebug() << "Processing in thread:" << QThread::currentThreadId();
-    //xstrProcessor->startProcessing();
+
+    auto function = std::bind(&Etemenanki::runXSTR, this);
+    XSTR_thread = QThread::create(function);
+
+    connect(XSTR_thread, &QThread::finished, this, [this]() {
+        ui.actionExit->setEnabled(true);
+        });
+
     XSTR_thread->start();
 
     ui.begin_button->setText("Terminate");
-    //ui.begin_button->setEnabled(false);
-    ui.directory_line_edit->setEnabled(false);
-    ui.files_line_edit->setEnabled(false);
-    ui.files_list_widget->setEnabled(false);
-    ui.files_add_button->setEnabled(false);
-    ui.files_update_button->setEnabled(false);
-    ui.files_remove_button->setEnabled(false);
-    ui.regex_line_edit->setEnabled(false);
-    ui.position_string_line_edit->setEnabled(false);
-    ui.position_id_line_edit->setEnabled(false);
-    ui.regex_table_widget->setEnabled(false);
-    ui.regex_add_button->setEnabled(false);
-    ui.regex_update_button->setEnabled(false);
-    ui.regex_remove_button->setEnabled(false);
-    ui.offset_line_edit->setEnabled(false);
-    ui.replace_radio_button->setEnabled(false);
-    ui.output_line_edit->setEnabled(false);
-    ui.actionExit->setEnabled(false);
+    
+    toggleControls(false);
+}
+
+void Etemenanki::toggleControls(bool val) {
+    ui.directory_line_edit->setEnabled(val);
+    ui.files_line_edit->setEnabled(val);
+    ui.files_list_widget->setEnabled(val);
+    ui.files_add_button->setEnabled(val);
+    ui.files_update_button->setEnabled(val);
+    ui.files_remove_button->setEnabled(val);
+    ui.regex_line_edit->setEnabled(val);
+    ui.position_string_line_edit->setEnabled(val);
+    ui.position_id_line_edit->setEnabled(val);
+    ui.regex_table_widget->setEnabled(val);
+    ui.regex_add_button->setEnabled(val);
+    ui.regex_update_button->setEnabled(val);
+    ui.regex_remove_button->setEnabled(val);
+    ui.offset_line_edit->setEnabled(val);
+    ui.replace_radio_button->setEnabled(val);
+    ui.output_line_edit->setEnabled(val);
+    ui.actionExit->setEnabled(val);
 }
 
 void Etemenanki::updateTerminalOutput(const QString& text) {
