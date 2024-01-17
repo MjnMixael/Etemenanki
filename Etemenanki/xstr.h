@@ -8,6 +8,21 @@
 
 #include "Etemenanki.h"
 
+// Define a helper QObject class for signaling
+class XstrSignalHelper : public QObject {
+    Q_OBJECT
+
+public:
+    XstrSignalHelper(QObject* parent = nullptr) : QObject(parent) {}
+
+signals:
+    void updateTerminalText(const QString& text);
+};
+
+extern XstrSignalHelper* xstrSignalHelper;
+
+// Xstr variables
+
 struct xstrPair {
     int id;
     std::string text;
@@ -21,7 +36,7 @@ struct regexPattern {
     std::string pattern_string;
 };
 
-extern QLabel* Terminal;
+extern std::atomic<bool> continueProcessing;
 
 extern std::string Output_filename;
 

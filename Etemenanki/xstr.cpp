@@ -2,7 +2,9 @@
 
 namespace fs = std::filesystem;
 
-QLabel* Terminal;
+std::atomic<bool> continueProcessing = true;
+
+XstrSignalHelper* xstrSignalHelper = nullptr;
 
 int Counter = 0;
 
@@ -23,7 +25,7 @@ std::string Input_path;
 
 void setTerminalText(std::string text) {
     QString msg = QString::fromStdString(text);
-    Terminal->setText(msg);
+    emit xstrSignalHelper->updateTerminalText(msg);
 }
 
 int savePair(std::string line, int id) {
@@ -83,6 +85,9 @@ int getXSTR(std::string line) {
 }
 
 void processFile(const fs::path& filePath) {
+    if (!continueProcessing.load()) {
+        return;
+    }
     std::ifstream inputFile(filePath);
     if (!inputFile.is_open()) {
         std::string msg = "Error opening file: " + filePath.string();
@@ -200,6 +205,9 @@ bool isExtensionValid(std::string extension) {
 void processDirectory(const fs::path& directoryPath) {
     setTerminalText(Input_path);
     for (const auto& entry : fs::recursive_directory_iterator(directoryPath)) {
+        if (!continueProcessing.load()) {
+            return;
+        }
         if (entry.is_regular_file()) {
             // Check if the file has the required extension
             std::string extension = entry.path().extension().string();

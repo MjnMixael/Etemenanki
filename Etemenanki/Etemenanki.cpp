@@ -6,7 +6,8 @@ Etemenanki::Etemenanki(QWidget *parent)
 {
     ui.setupUi(this);
 
-    Terminal = ui.terminal_output;
+    xstrSignalHelper = new XstrSignalHelper();
+    connect(xstrSignalHelper, &XstrSignalHelper::updateTerminalText, this, &Etemenanki::updateTerminalOutput);
 
     ui.offset_line_edit->setValidator(new QIntValidator(0, 9999999, this));
     ui.position_string_line_edit->setValidator(new QIntValidator(0, 9, this));
@@ -187,10 +188,10 @@ void Etemenanki::on_regex_table_widget_clicked() {
 }
 
 void Etemenanki::on_begin_button_clicked() {
-    /*if (XSTR_thread->isRunning()) {
-        XSTR_thread->terminate(); //Causes an crash -- FIXMEEE
+    if (XSTR_thread->isRunning()) {
+        continueProcessing.store(false);
         ui.begin_button->setText("Run");
-    }*/
+    }
 
     Valid_extensions.clear();
     Valid_patterns.clear();
@@ -250,8 +251,8 @@ void Etemenanki::on_begin_button_clicked() {
 
     XSTR_thread->start();
 
-    //ui.begin_button->setText("Terminate");
-    ui.begin_button->setEnabled(false);
+    ui.begin_button->setText("Terminate");
+    //ui.begin_button->setEnabled(false);
     ui.directory_line_edit->setEnabled(false);
     ui.files_line_edit->setEnabled(false);
     ui.files_list_widget->setEnabled(false);
@@ -275,8 +276,6 @@ void Etemenanki::runXSTR() {
     run();
 }
 
-void Etemenanki::set_terminal_text(std::string input) {
-    QString text;
-    text.fromStdString(input);
+void Etemenanki::updateTerminalOutput(const QString& text) {
     ui.terminal_output->setText(text);
 }

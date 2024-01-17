@@ -51,8 +51,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="xstr.h">
+    <QtMoc Include="xstr.h">
       <Filter>Source Files</Filter>
-    </ClInclude>
+    </QtMoc>
   </ItemGroup>
 </Project>
