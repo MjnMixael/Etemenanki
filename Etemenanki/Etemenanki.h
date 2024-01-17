@@ -47,6 +47,9 @@ public slots:
     void uiSaveSettings();
     void uiOpenDocumentation();
 
+protected:
+    void closeEvent(QCloseEvent* event) override;
+
 private:
     QString Title = "Etemenanki";
     QString Version = "v.1.0.0";

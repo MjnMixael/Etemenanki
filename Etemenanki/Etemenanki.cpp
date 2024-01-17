@@ -57,6 +57,24 @@ void Etemenanki::uiOpenDocumentation() {
     QDesktopServices::openUrl(Github);
 }
 
+void Etemenanki::closeEvent(QCloseEvent* event) {
+    if (xstrProcessor->isRunning()) {
+        continueProcessing = false;
+
+        ui.begin_button->setEnabled(false);
+        ui.begin_button->setText("Waiting...");
+
+        XSTR_thread->wait();
+        delete XSTR_thread;
+
+        ui.begin_button->setText("Run");
+        ui.begin_button->setEnabled(true);
+        toggleControls(true);
+    }
+
+    saveSettings();
+}
+
 bool itemExists(QListWidget* listWidget, const QString& textToCheck) {
     for (int i = 0; i < listWidget->count(); ++i) {
         QListWidgetItem* item = listWidget->item(i);
