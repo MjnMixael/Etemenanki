@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) Mike Nelson
+ *
+ * All source code herein is subject to the GPL license included.
+ *
+*/
+
 #include "Etemenanki.h"
 #include <QtWidgets/QApplication>
 

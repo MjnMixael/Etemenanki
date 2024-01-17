@@ -746,6 +746,8 @@ Make sure your directory path is correct!</string>
      <string>Help</string>
     </property>
     <addaction name="actionAbout"/>
+    <addaction name="separator"/>
+    <addaction name="actionCreated_by_Mike_MjnMixael_Nelson"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuAbout"/>
@@ -776,6 +778,14 @@ Make sure your directory path is correct!</string>
   <action name="actionAbout">
    <property name="text">
     <string>Open ReadMe In Browser</string>
+   </property>
+  </action>
+  <action name="actionCreated_by_Mike_MjnMixael_Nelson">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Created by Mike &quot;MjnMixael&quot; Nelson</string>
    </property>
   </action>
  </widget>

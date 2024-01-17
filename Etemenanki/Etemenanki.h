@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) Mike Nelson
+ *
+ * All source code herein is subject to the GPL license included.
+ *
+*/
+
 #pragma once
 
 #include <QtWidgets/QMainWindow>
@@ -41,6 +48,9 @@ public slots:
     void uiOpenDocumentation();
 
 private:
+    QString Title = "Etemenanki";
+    QString Version = "v.1.0.0";
+    QString Description = "A translation tool for FreespaceOpen!";
     Ui::EtemenankiClass ui;
     XstrProcessor* xstrProcessor;
     QThread* processor;

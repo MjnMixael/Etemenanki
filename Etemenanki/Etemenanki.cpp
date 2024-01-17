@@ -1,7 +1,11 @@
-#include "Etemenanki.h"
-#include "xstr.h"
+/*
+ * Copyright (C) Mike Nelson
+ *
+ * All source code herein is subject to the GPL license included.
+ *
+*/
 
-#include <regex>
+#include "Etemenanki.h"
 
 bool continueProcessing = false;
 
@@ -11,8 +15,8 @@ Etemenanki::Etemenanki(QWidget *parent)
     ui.setupUi(this);
 
     setWindowFlags(Qt::Window | Qt::MSWindowsFixedSizeDialogHint);
-
-    setWindowTitle("Etemenanki - A translation tool for FreespaceOpen!");
+    QString windowString = Title + " " + Version + " - " + Description;
+    setWindowTitle(windowString);
 
     SettingsFileName = AppDataPath + "settings.json";
     LogFileName = AppDataPath + "Etemenanki.log";
