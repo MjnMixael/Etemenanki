@@ -605,20 +605,23 @@ Make sure your directory path is correct!</string>
       <height>161</height>
      </rect>
     </property>
+    <property name="verticalScrollBarPolicy">
+     <enum>Qt::ScrollBarAlwaysOn</enum>
+    </property>
     <property name="horizontalScrollBarPolicy">
      <enum>Qt::ScrollBarAlwaysOff</enum>
     </property>
     <property name="autoScroll">
-     <bool>true</bool>
+     <bool>false</bool>
     </property>
     <property name="columnCount">
-     <number>3</number>
+     <number>4</number>
     </property>
     <attribute name="horizontalHeaderVisible">
      <bool>false</bool>
     </attribute>
     <attribute name="horizontalHeaderMinimumSectionSize">
-     <number>49</number>
+     <number>15</number>
     </attribute>
     <attribute name="horizontalHeaderDefaultSectionSize">
      <number>298</number>
@@ -632,6 +635,7 @@ Make sure your directory path is correct!</string>
     <attribute name="verticalHeaderDefaultSectionSize">
      <number>22</number>
     </attribute>
+    <column/>
     <column/>
     <column/>
     <column/>

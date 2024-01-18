@@ -63,7 +63,8 @@ private:
     QUrl Github = "https://github.com/MjnMixael/Etemenanki";
 
     void toggleControls(bool val);
-    bool add_regex_row(QString pattern, QString string_pos, QString id_pos, int row = -1);
+    bool add_regex_row(QString pattern, QString string_pos, QString id_pos, bool checked = true, int row = -1);
+    bool isRowChecked(int row);
     void add_file_extension(QString ext);
     void loadSettings();
     void saveSettings();
