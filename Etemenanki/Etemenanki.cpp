@@ -267,6 +267,7 @@ bool Etemenanki::isRowChecked(int row) {
 
 void Etemenanki::on_begin_button_clicked() {
     if (xstrProcessor->isRunning()) {
+        ui.begin_button->setEnabled(false); // Prevent double clicks
         continueProcessing = false;
         return;
     }
@@ -282,18 +283,18 @@ void Etemenanki::on_begin_button_clicked() {
 
     // Validate values
     if (directory.isEmpty()) {
-        ui.terminal_output->setText("No directory provided!");
+        updateTerminalOutput("No directory provided!");
         return;
     }
 
     if (outputFile.isEmpty()) {
-        ui.terminal_output->setText("Output not provided. Using default!");
+        updateTerminalOutput("Output not provided. Using default!");
         outputFile = "tstrings.tbl";
         return;
     }
 
     if (offset.isEmpty()) {
-        ui.terminal_output->setText("Offset not provided. Setting to 0!");
+        updateTerminalOutput("Offset not provided. Setting to 0!");
         offset = "1";
         return;
     }
@@ -323,6 +324,16 @@ void Etemenanki::on_begin_button_clicked() {
     }
 
     saveSettings();
+
+    if (xstrProcessor->getNumFileExtensions() <= 0) {
+        updateTerminalOutput("No file extensions provided!");
+        return;
+    }
+
+    if (xstrProcessor->getNumRegexPatterns() <= 0) {
+        updateTerminalOutput("No active regex patterns provided!");
+        return;
+    }
 
     qDebug() << "Processing in thread:" << QThread::currentThreadId();
 

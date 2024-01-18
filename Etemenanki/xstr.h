@@ -37,6 +37,9 @@ public:
     void setOffset(int val);
     void setLogFilePath(QString path);
 
+    int getNumFileExtensions();
+    int getNumRegexPatterns();
+
     void clearVectors();
 
     void addFileExtension(std::string ext);

@@ -38,6 +38,14 @@ void XstrProcessor::setOffset(int val) {
     Offset = val;
 }
 
+int XstrProcessor::getNumFileExtensions() {
+    return Valid_extensions.size();
+}
+
+int XstrProcessor::getNumRegexPatterns() {
+    return Valid_patterns.size();
+}
+
 void XstrProcessor::clearVectors() {
     Valid_extensions.clear();
     Valid_patterns.clear();
