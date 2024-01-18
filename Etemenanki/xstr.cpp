@@ -315,8 +315,8 @@ void XstrProcessor::run() {
 
     logEntry("List of regex pattern settings", false);
     for (auto set : Valid_patterns) {
-        std::string s_pos = "++String position: " + set.string_position;
-        std::string i_pos = "++ID position: " + set.id_position;
+        std::string s_pos = "++String position: " + std::to_string(set.string_position);
+        std::string i_pos = "++ID position: " + std::to_string(set.id_position);
 
         logEntry(set.pattern_string, false);
         logEntry(s_pos, false);
