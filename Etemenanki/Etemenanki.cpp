@@ -268,7 +268,6 @@ bool Etemenanki::isRowChecked(int row) {
 void Etemenanki::on_begin_button_clicked() {
     if (xstrProcessor->isRunning()) {
         continueProcessing = false;
-        resetInterface();
         return;
     }
 
