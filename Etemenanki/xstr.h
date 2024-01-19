@@ -22,6 +22,11 @@ namespace fs = std::filesystem;
 
 extern bool continueProcessing;
 
+struct xstrPair {
+    int id;
+    std::string text;
+};
+
 class XstrProcessor : public QObject {
     Q_OBJECT
 
@@ -49,6 +54,45 @@ public:
 
     void run();
 
+signals:
+    void updateTerminalText(const QString& text);
+
+public slots:
+    //
+
+private:
+    // Top level methods
+    void processDirectory(const fs::path& directoryPath);
+    bool isExtensionValid(const std::string& extension);
+    void processFile(const fs::path& filePath, bool write = true);
+    void logEntry(const std::string& text, bool update_terminal = true);
+
+    // Takes the line from the file and replaces the ID with the new one
+    std::string replacePattern(const std::string& input, const std::string& somestring, int counter);
+
+    // Checks if a line ID needs to be replaced
+    void replaceLineID(std::string& line, const std::string& current_string, int& current_id);
+
+    // Validates an xstr pair by comparing existing strings and IDs in the XSTR_list.
+    // Fixes invalid IDs and generates new ones if required
+    void validateXSTR(const std::string& line, int& id);
+
+    // Saves a pair to XSTR_list and outputs the pair to the output file (usually tstrings.tbl)
+    void savePair(const std::string& line, int id);
+
+    // Replaces the ID of a pair in XSTR_list
+    void replacePairID(const std::string& line, int new_id);
+
+    xstrPair* findPair(const std::string& text);
+    xstrPair* findPair(const int& id);
+    int getNewId();
+
+    std::vector<xstrPair> XSTR_list;
+    int Counter = 0;
+    std::ofstream Output_file;
+    std::string LogFilePath;
+    std::ofstream Log_file;
+
     struct regexPattern {
         std::regex pattern;
         int string_position;
@@ -64,32 +108,4 @@ public:
     std::vector<std::string> Valid_extensions;
     std::vector<regexPattern> Valid_patterns;
     std::string Input_path;
-
-signals:
-    void updateTerminalText(const QString& text);
-
-public slots:
-    //
-
-private:
-    void processDirectory(const fs::path& directoryPath);
-    bool isExtensionValid(std::string extension);
-    void processFile(const fs::path& filePath);
-    int getXSTR(std::string line);
-    bool hasInvalidID(std::string line, int id);
-    int getExistingXSTR(std::string line);
-    std::string replacePattern(const std::string& input, const std::string& somestring, int counter);
-    int savePair(std::string line, int id);
-    void logEntry(const std::string& text, bool update_terminal = true);
-
-    struct xstrPair {
-        int id;
-        std::string text;
-    };
-
-    std::vector<xstrPair> XSTR_list;
-    int Counter = 0;
-    std::ofstream Output_file;
-    std::string LogFilePath;
-    std::ofstream Log_file;
 };

@@ -39,11 +39,11 @@ void XstrProcessor::setOffset(int val) {
 }
 
 int XstrProcessor::getNumFileExtensions() {
-    return Valid_extensions.size();
+    return static_cast<int>(Valid_extensions.size());
 }
 
 int XstrProcessor::getNumRegexPatterns() {
-    return Valid_patterns.size();
+    return static_cast<int>(Valid_patterns.size());
 }
 
 void XstrProcessor::clearVectors() {
@@ -81,14 +81,6 @@ void XstrProcessor::logEntry(const std::string& text, bool update_terminal) {
     }
 }
 
-int XstrProcessor::savePair(std::string line, int id) {
-    xstrPair newPair = { id, line };
-    XSTR_list.push_back(newPair);
-    Output_file << newPair.id << ", \"" << newPair.text << "\"" << std::endl;
-
-    return newPair.id;
-}
-
 std::string XstrProcessor::replacePattern(const std::string& input, const std::string& somestring, int counter) {
     std::regex pattern("\"([^\"]+)\",\\s*(-?\\d+)");
     std::smatch match;
@@ -101,43 +93,96 @@ std::string XstrProcessor::replacePattern(const std::string& input, const std::s
     return input;
 }
 
-int XstrProcessor::getExistingXSTR(std::string line) {
+void XstrProcessor::savePair(const std::string& line, int id) {
+    // A quick verification that -1 is the only invalid ID stored
+    if (id < 0) {
+        id = -1;
+    }
+
+    xstrPair newPair = { id, line };
+    XSTR_list.push_back(newPair);
+    Output_file << newPair.id << ", \"" << newPair.text << "\"" << std::endl;
+}
+
+void XstrProcessor::replacePairID(const std::string& line, int new_id) {
     for (auto& pair : XSTR_list) {
         if (pair.text == line) {
-            return pair.id;
+            pair.id = new_id;
+            return;
+        }
+    }
+}
+
+int XstrProcessor::getNewId() {
+    int new_id = Offset + Counter++;
+
+    while (findPair(new_id) != nullptr) {
+        new_id = Offset + Counter++;
+    }
+
+    return new_id;
+}
+
+xstrPair* XstrProcessor::findPair(const std::string& text) {
+    for (size_t i = 0; i < XSTR_list.size(); i++) {
+        if (XSTR_list[i].text == text) {
+            return &XSTR_list[i];
         }
     }
 
-    return -1;
+    return nullptr;
 }
 
-bool XstrProcessor::hasInvalidID(std::string line, int id) {
-    for (auto& pair : XSTR_list) {
-        if (pair.id == id) {
-            if (pair.text != line) {
-                return true;
-            } else {
-                return false;
-            }
+xstrPair* XstrProcessor::findPair(const int& id) {
+    for (size_t i = 0; i < XSTR_list.size(); i++) {
+        if (XSTR_list[i].id == id) {
+            return &XSTR_list[i];
         }
     }
 
-    return false;
+    return nullptr;
 }
 
-int XstrProcessor::getXSTR(std::string line) {
-    int id = getExistingXSTR(line);
+void XstrProcessor::validateXSTR(const std::string& line, int& id) {
+    xstrPair* thisPair = findPair(line);
 
-    if (id >= 0) {
-        return id;
+    if (thisPair == nullptr) {
+        // Didn't find a string match. Now check for duplicate IDs
+        thisPair = findPair(id);
+        if (thisPair == nullptr) {
+            // This pair is valid and brand new
+            savePair(line, id);
+            return;
+        } else {
+            // The ID matches, but the strings didn't so this is an invalid ID. Time to get a new one.
+            id = getNewId();
+            return;
+        }
+    } else {
+        // The string matches, does the ID?
+        if (thisPair->id == id) {
+            // It does, so this is a valid XSTR
+            return;
+        } else {
+            // It does not, so we need to fix the ID so it matches
+            id = thisPair->id;
+            return;
+        }
     }
-
-    id = Offset + Counter++;
-
-    return savePair(line, id);
+    
 }
 
-void XstrProcessor::processFile(const fs::path& filePath) {
+void XstrProcessor::replaceLineID(std::string& line, const std::string& current_string, int& current_id) {
+    // If Replace_existing then we don't bother validating. Everything gets a new ID
+    if (Replace_existing) {
+        line = replacePattern(line, current_string, Offset + Counter++);
+    } else {
+        validateXSTR(current_string, current_id);
+        line = replacePattern(line, current_string, current_id);
+    }
+}
+
+void XstrProcessor::processFile(const fs::path& filePath, bool write) {
     if (!continueProcessing) {
         return;
     }
@@ -182,7 +227,7 @@ void XstrProcessor::processFile(const fs::path& filePath) {
                     logEntry(msg, false);
                 }
 
-                std::string somestring = match[set.string_position].str();
+                std::string current_string = match[set.string_position].str();
                 std::string current_id = match[set.id_position].str();
 
                 int id;
@@ -211,22 +256,11 @@ void XstrProcessor::processFile(const fs::path& filePath) {
                     logEntry(msg, false);
                 }
 
-                // Check for invalid duplicate IDs
-                bool invalid_id = false;
-                if (!Replace_existing && (hasInvalidID(somestring, id))) {
-                    invalid_id = true;
+                if (write) {
+                    replaceLineID(line, current_string, id);
+                } else {
+                    validateXSTR(current_string, id);
                 }
-
-                // Maybe get a new id
-                if ((id == -1) || invalid_id || Replace_existing) {
-                    id = getXSTR(somestring);
-                }
-                else {
-                    if (getExistingXSTR(somestring) == -1) {
-                        savePair(somestring, id);
-                    }
-                }
-                line = replacePattern(line, somestring, id);
             }
         }
 
@@ -235,7 +269,7 @@ void XstrProcessor::processFile(const fs::path& filePath) {
     }
     inputFile.close();
 
-    if (found) {
+    if (write && found) {
         // Write the modified content back to the file
         std::ofstream outputFile(filePath, std::ofstream::trunc);
         if (!outputFile.is_open()) {
@@ -253,7 +287,7 @@ void XstrProcessor::processFile(const fs::path& filePath) {
 }
 
 
-bool XstrProcessor::isExtensionValid(std::string extension) {
+bool XstrProcessor::isExtensionValid(const std::string& extension) {
     for (auto ext : Valid_extensions) {
         if (extension == ext) {
             return true;
