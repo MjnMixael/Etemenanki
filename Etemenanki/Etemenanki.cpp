@@ -304,6 +304,7 @@ void Etemenanki::on_begin_button_clicked() {
     xstrProcessor->setOutputFilepath(outputDirectory.toStdString());
     xstrProcessor->setOutputFilename(outputFile.toStdString());
     xstrProcessor->setOffset(offset.toInt());
+    xstrProcessor->setReplaceExisting(replace);
 
     for (int i = 0; i < ui.files_list_widget->count(); ++i) {
         std::string ext = ui.files_list_widget->item(i)->text().toStdString();
