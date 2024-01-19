@@ -16,7 +16,9 @@
 #include <QJsonArray>
 #include <QStandardPaths>
 #include <QDesktopServices>
+
 #include "ui_Etemenanki.h"
+#include "Settings.h"
 #include "xstr.h"
 
 class Etemenanki : public QMainWindow
@@ -26,6 +28,14 @@ class Etemenanki : public QMainWindow
 public:
     Etemenanki(QWidget *parent = nullptr);
     QThread* XSTR_thread;
+
+    void set_comprehensive(bool val);
+    bool get_comprehensive();
+
+    void set_fill_in_ids(bool val);
+    bool get_fill_in_ids();
+
+    void toggle_offset_control(bool val);
 
 public slots:
     void on_files_add_button_clicked();
@@ -44,15 +54,17 @@ public slots:
 
     void runXSTR();
 
+    // Menu actions
     void uiSaveSettings();
     void uiOpenDocumentation();
+    void uiOpenPreferences();
 
 protected:
     void closeEvent(QCloseEvent* event) override;
 
 private:
     QString Title = "Etemenanki";
-    QString Version = "v.1.0.0";
+    QString Version = "v.1.2.0";
     QString Description = "A translation tool for FreespaceOpen!";
     Ui::EtemenankiClass ui;
     XstrProcessor* xstrProcessor;
@@ -61,6 +73,9 @@ private:
     QString SettingsFileName;
     QString LogFileName;
     QUrl Github = "https://github.com/MjnMixael/Etemenanki";
+
+    int regex_check_w = 23;
+    int regex_position_w = 40;
 
     void toggleControls(bool val);
     bool add_regex_row(QString pattern, QString string_pos, QString id_pos, bool checked = true, int row = -1);
@@ -76,6 +91,8 @@ private:
     QString defaultOutputDirectory = "";
     QString defaultOffset = "0";
     bool defaultReplacement = false;
+    bool comprehensiveScan = false;
+    bool fillInIds = false;
     QStringList defaultExtensions = { ".tbl", ".tbm", ".fs2", ".fc2" };
     QJsonObject defaultRegex() {
         QJsonObject obj;

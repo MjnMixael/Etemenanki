@@ -268,6 +268,9 @@
       <height>22</height>
      </rect>
     </property>
+    <property name="maxLength">
+     <number>7</number>
+    </property>
    </widget>
    <widget class="QLabel" name="files_label">
     <property name="geometry">
@@ -735,13 +738,14 @@ Make sure your directory path is correct!</string>
      <x>0</x>
      <y>0</y>
      <width>890</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionPreferences"/>
     <addaction name="actionSave_Settings"/>
     <addaction name="actionExit"/>
    </widget>
@@ -782,6 +786,11 @@ Make sure your directory path is correct!</string>
    </property>
    <property name="text">
     <string>Created by Mike &quot;MjnMixael&quot; Nelson</string>
+   </property>
+  </action>
+  <action name="actionPreferences">
+   <property name="text">
+    <string>Preferences</string>
    </property>
   </action>
  </widget>
@@ -838,9 +847,26 @@ Make sure your directory path is correct!</string>
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionPreferences</sender>
+   <signal>triggered()</signal>
+   <receiver>EtemenankiClass</receiver>
+   <slot>uiOpenPreferences()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>444</x>
+     <y>211</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>uiSaveSettings()</slot>
   <slot>uiOpenDocumentation()</slot>
+  <slot>uiOpenPreferences()</slot>
  </slots>
 </ui>

@@ -12,6 +12,9 @@
 #include <fstream>
 #include <filesystem>
 #include <regex>
+#include <set>
+#include <thread>
+#include <chrono>
 
 #include <QThread>
 #include <QTimer>
@@ -39,6 +42,8 @@ public:
     void setOutputFilepath(std::string path);
     void setOutputFilename(std::string file);
     void setReplaceExisting(bool val);
+    void setComprehensiveScan(bool val);
+    void setFillEmptyIds(bool val);
     void setOffset(int val);
     void setLogFilePath(QString path);
 
@@ -62,10 +67,11 @@ public slots:
 
 private:
     // Top level methods
-    void processDirectory(const fs::path& directoryPath);
+    void processDirectory(const fs::path& directoryPath, bool write);
     bool isExtensionValid(const std::string& extension);
-    void processFile(const fs::path& filePath, bool write = true);
+    void processFile(const fs::path& filePath, bool write);
     void logEntry(const std::string& text, bool update_terminal = true);
+    void updateIds();
 
     // Takes the line from the file and replaces the ID with the new one
     std::string replacePattern(const std::string& input, const std::string& somestring, int counter);
@@ -77,11 +83,11 @@ private:
     // Fixes invalid IDs and generates new ones if required
     void validateXSTR(const std::string& line, int& id);
 
-    // Saves a pair to XSTR_list and outputs the pair to the output file (usually tstrings.tbl)
+    // Saves a pair to the XSTR_list vector
     void savePair(const std::string& line, int id);
 
-    // Replaces the ID of a pair in XSTR_list
-    void replacePairID(const std::string& line, int new_id);
+    // Write a pair to the output file, usually tstrings.tbl
+    void writePair(const std::string& line, const int& id);
 
     xstrPair* findPair(const std::string& text);
     xstrPair* findPair(const int& id);
@@ -105,6 +111,8 @@ private:
     std::string Output_filename;
     int Offset = 0;
     bool Replace_existing = false;
+    bool Comprehensive_scan = false;
+    bool Fill_empty_ids = false;
     std::vector<std::string> Valid_extensions;
     std::vector<regexPattern> Valid_patterns;
     std::string Input_path;

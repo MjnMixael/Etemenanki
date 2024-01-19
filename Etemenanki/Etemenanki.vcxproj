@@ -100,6 +100,7 @@ xcopy /y "C:\Qt\5.15.2\msvc2019_64\plugins\platforms\qwindows.dll" "$(OutDir)pla
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Settings.cpp" />
     <ClCompile Include="xstr.cpp" />
     <QtRcc Include="Etemenanki.qrc" />
     <QtUic Include="Etemenanki.ui" />
@@ -107,10 +108,14 @@ xcopy /y "C:\Qt\5.15.2\msvc2019_64\plugins\platforms\qwindows.dll" "$(OutDir)pla
     <ClCompile Include="Etemenanki.cpp" />
     <ClCompile Include="main.cpp" />
     <None Include="Etemenanki.ico" />
+    <QtUic Include="Settings.ui" />
     <ResourceCompile Include="Etemenanki.rc" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="xstr.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="Settings.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

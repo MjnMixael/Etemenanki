@@ -25,10 +25,12 @@ Etemenanki::Etemenanki(QWidget *parent)
     ui.offset_line_edit->setValidator(new QIntValidator(0, 9999999, this));
     ui.position_string_line_edit->setValidator(new QIntValidator(0, 9, this));
     ui.position_id_line_edit->setValidator(new QIntValidator(0, 9, this));
-    ui.regex_table_widget->setColumnWidth(0, 23);
-    ui.regex_table_widget->setColumnWidth(1, 476);
-    ui.regex_table_widget->setColumnWidth(2, 40);
-    ui.regex_table_widget->setColumnWidth(3, 40);
+    ui.regex_table_widget->setColumnWidth(0, regex_check_w);
+    int scrollBarWidth = qApp->style()->pixelMetric(QStyle::PM_ScrollBarExtent);
+    int regex_main_w = (ui.regex_table_widget->width() - ((regex_position_w * 2) + regex_check_w + scrollBarWidth));
+    ui.regex_table_widget->setColumnWidth(1, regex_main_w);
+    ui.regex_table_widget->setColumnWidth(2, regex_position_w);
+    ui.regex_table_widget->setColumnWidth(3, regex_position_w);
 
     // Load user settings and/or defaults
     loadSettings();
@@ -38,6 +40,9 @@ Etemenanki::Etemenanki(QWidget *parent)
     ui.regex_remove_button->setEnabled(false);
     ui.files_update_button->setEnabled(false);
     ui.files_remove_button->setEnabled(false);
+
+    // Maybe disable offset
+    toggle_offset_control(!fillInIds);
 
     //Create the processor thread
     xstrProcessor = new XstrProcessor(this);
@@ -56,6 +61,11 @@ void Etemenanki::uiSaveSettings() {
 
 void Etemenanki::uiOpenDocumentation() {
     QDesktopServices::openUrl(Github);
+}
+
+void Etemenanki::uiOpenPreferences() {
+    SettingsDialog dialog(this, this);
+    dialog.exec();
 }
 
 void Etemenanki::closeEvent(QCloseEvent* event) {
@@ -77,6 +87,24 @@ void Etemenanki::resetInterface() {
     ui.begin_button->setText("Run");
     ui.begin_button->setEnabled(true);
     toggleControls(true);
+}
+
+void Etemenanki::set_comprehensive(bool val) {
+    comprehensiveScan = val;
+}
+bool Etemenanki::get_comprehensive() {
+    return comprehensiveScan;
+}
+
+void Etemenanki::set_fill_in_ids(bool val) {
+    fillInIds = val;
+}
+bool Etemenanki::get_fill_in_ids() {
+    return fillInIds;
+}
+
+void Etemenanki::toggle_offset_control(bool val) {
+    ui.offset_line_edit->setEnabled(val);
 }
 
 bool itemExists(QListWidget* listWidget, const QString& textToCheck) {
@@ -305,6 +333,8 @@ void Etemenanki::on_begin_button_clicked() {
     xstrProcessor->setOutputFilename(outputFile.toStdString());
     xstrProcessor->setOffset(offset.toInt());
     xstrProcessor->setReplaceExisting(replace);
+    xstrProcessor->setComprehensiveScan(comprehensiveScan);
+    xstrProcessor->setFillEmptyIds(fillInIds);
 
     for (int i = 0; i < ui.files_list_widget->count(); ++i) {
         std::string ext = ui.files_list_widget->item(i)->text().toStdString();
@@ -367,10 +397,13 @@ void Etemenanki::toggleControls(bool val) {
     ui.regex_add_button->setEnabled(val);
     ui.regex_update_button->setEnabled(val);
     ui.regex_remove_button->setEnabled(val);
-    ui.offset_line_edit->setEnabled(val);
+    if (!fillInIds) {
+        ui.offset_line_edit->setEnabled(val);
+    }
     ui.replace_radio_button->setEnabled(val);
     ui.output_directory_line_edit->setEnabled(val);
     ui.output_file_line_edit->setEnabled(val);
+    ui.actionPreferences->setEnabled(val);
 }
 
 void Etemenanki::updateTerminalOutput(const QString& text) {
@@ -392,6 +425,8 @@ void Etemenanki::loadSettings() {
     ui.directory_line_edit->setText(settings["directory"].toString());
     ui.offset_line_edit->setText(settings.value("offset").toString(defaultOffset));
     ui.replace_radio_button->setChecked(settings.value("replaceValues").toBool(defaultReplacement));
+    comprehensiveScan = settings.value("comprehensive").toBool(comprehensiveScan);
+    fillInIds = settings.value("fillInIds").toBool(fillInIds);
 
     ui.files_list_widget->clear(); // Clear existing items before loading
     QJsonArray extensionsArray;
@@ -437,6 +472,8 @@ void Etemenanki::saveSettings() {
     settings["directory"] = ui.directory_line_edit->text();
     settings["offset"] = ui.offset_line_edit->text();
     settings["replaceValues"] = ui.replace_radio_button->isChecked();
+    settings["comprehensive"] = comprehensiveScan;
+    settings["fillInIds"] = fillInIds;
 
     QJsonArray extensionsArray;
     for (int i = 0; i < ui.files_list_widget->count(); ++i) {
