@@ -19,6 +19,7 @@ void SettingsDialog::accept() {
             etemenanki->toggle_offset_control(!ui.fill_in_ids_button->isChecked());
         } else {
             etemenanki->set_fill_in_ids(false);
+            etemenanki->toggle_offset_control(true);
         }
     }
 

@@ -28,6 +28,10 @@ extern bool continueProcessing;
 struct xstrPair {
     int id;
     std::string text;
+    bool printed;
+    std::string file;
+
+    xstrPair() : id(-1), text(""), printed(false), file("") {}
 };
 
 class XstrProcessor : public QObject {
@@ -98,6 +102,7 @@ private:
     std::ofstream Output_file;
     std::string LogFilePath;
     std::ofstream Log_file;
+    std::string CurrentFile;
 
     struct regexPattern {
         std::regex pattern;

@@ -95,12 +95,29 @@ void XstrProcessor::savePair(const std::string& line, int id) {
         id = -1;
     }
 
-    xstrPair newPair = { id, line };
+    xstrPair newPair;
+    newPair.id = id;
+    newPair.text = line;
+    newPair.file = CurrentFile;
+
     XSTR_list.push_back(newPair);
 }
 
 void XstrProcessor::writePair(const std::string& line, const int& id) {
-    Output_file << id << ", \"" << line << "\"" << std::endl;
+    xstrPair* thisPair = findPair(line);
+    // Everything should be validated by now but just to be sure...
+    if (thisPair != nullptr) {
+        // Only write if we haven't written it yet
+        if (!thisPair->printed) {
+            thisPair->printed = true;
+            Output_file << thisPair->id << ", \"" << thisPair->text << "\"" << std::endl;
+        }
+    }
+    else {
+        // Well this isn't a good place to be.. log and skip!
+        std::string msg = "Failed to find string '" + line + "' with ID " + std::to_string(id) + ".Could not write to strings.tbl!";
+        logEntry(msg);
+    }
 }
 
 int XstrProcessor::getNewId() {
@@ -263,9 +280,11 @@ void XstrProcessor::replaceLineID(std::string& line, const std::string& current_
             std::string msg = "Failed to find ID for string '" + current_string + "', skipping!";
             logEntry(msg);
         }
-    // If Replace_existing then we don't bother validating. Everything gets a new ID
+    // If Replace_existing then everything gets a new ID
     } else if (Replace_existing) {
-        line = replacePattern(line, current_string, Offset + Counter++);
+        current_id = Offset + Counter++;
+        validateXSTR(current_string, current_id);
+        line = replacePattern(line, current_string, current_id);
     } else {
         validateXSTR(current_string, current_id);
         line = replacePattern(line, current_string, current_id);
@@ -314,10 +333,12 @@ void XstrProcessor::processFile(const fs::path& filePath, bool write) {
                 if (!found) {
                     found = true;
 
+                    // Save the filename to a global member
+                    CurrentFile = filePath.filename().string();
+
                     // List the filename we found a match in
                     if (write) {
-                        std::string file = filePath.filename().string();
-                        Output_file << ";;" << filePath.filename().string() << std::endl;
+                        Output_file << ";;" << CurrentFile << std::endl;
                     }
 
                     // Print to the terminal
