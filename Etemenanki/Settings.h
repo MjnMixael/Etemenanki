@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) Mike Nelson
+ *
+ * All source code herein is subject to the GPL license included.
+ *
+*/
+
 #pragma once
 
 #include <QDialog>
@@ -16,5 +23,5 @@ public slots:
     void on_comprehensive_button_clicked();
 private:
     Ui::SettingsDialog ui;
-    Etemenanki* etemenanki;
+    Etemenanki* m_etemenanki;
 };

@@ -23,15 +23,15 @@
 
 namespace fs = std::filesystem;
 
-extern bool continueProcessing;
+extern bool g_continueProcessing;
 
-struct xstrPair {
+struct XstrPair {
     int id;
     std::string text;
     bool printed;
     std::string file;
 
-    xstrPair() : id(-1), text(""), printed(false), file("") {}
+    XstrPair() : id(-1), text(""), printed(false), file("") {}
 };
 
 class XstrProcessor : public QObject {
@@ -40,7 +40,7 @@ class XstrProcessor : public QObject {
 public:
     XstrProcessor(QObject* parent = nullptr) : QObject(parent) {}
 
-    // Public methods
+    // Methods to set runtime options
     void setTerminalText(const std::string& text);
     void setInputPath(std::string path);
     void setOutputFilepath(std::string path);
@@ -51,60 +51,66 @@ public:
     void setOffset(int val);
     void setLogFilePath(QString path);
 
+    // Method to set runtime vectors
+    void clearVectors();
+    void addFileExtension(std::string ext);
+    void addRegexPattern(std::string pattern, int string_pos, int id_pos, int idx);
+    
+    // Methods to get runtime information
     int getNumFileExtensions();
     int getNumRegexPatterns();
 
-    void clearVectors();
-
-    void addFileExtension(std::string ext);
-    void addRegexPattern(std::string pattern, int string_pos, int id_pos, int idx);
-
+    // Thread handling
     bool isRunning();
-
     void run();
 
 signals:
-    void updateTerminalText(const QString& text);
+    void update_terminal_text(const QString& text);
 
 public slots:
     //
 
 private:
     // Top level methods
-    void processDirectory(const fs::path& directoryPath, bool write);
+    void processDirectory(const fs::path& directory_path, bool write);
     bool isExtensionValid(const std::string& extension);
-    void processFile(const fs::path& filePath, bool write);
+    void processFile(const fs::path& file_path, bool write);
     void logEntry(const std::string& text, bool update_terminal = true);
     void updateIds();
 
     // Takes the line from the file and replaces the ID with the new one
-    std::string replacePattern(const std::string& input, const std::string& somestring, int counter);
+    std::string replacePattern(const std::string& input, const std::string& current_string, const int& current_id);
 
     // Checks if a line ID needs to be replaced
     void replaceLineID(std::string& line, const std::string& current_string, int& current_id);
 
-    // Validates an xstr pair by comparing existing strings and IDs in the XSTR_list.
+    // Validates an xstr pair by comparing existing strings and IDs in the m_xstrList.
     // Fixes invalid IDs and generates new ones if required
     void validateXSTR(const std::string& line, int& id);
 
-    // Saves a pair to the XSTR_list vector
+    // Saves a pair to the m_xstrList vector
     void savePair(const std::string& line, int id);
 
     // Write a pair to the output file, usually tstrings.tbl
     void writePair(const std::string& line, const int& id);
 
-    xstrPair* findPair(const std::string& text);
-    xstrPair* findPair(const int& id);
+    // Get a new unique xstr id
     int getNewId();
+    
+    // Overloads to find an xstr pair
+    XstrPair* findPair(const std::string& text);
+    XstrPair* findPair(const int& id);
 
-    std::vector<xstrPair> XSTR_list;
-    int Counter = 0;
-    std::ofstream Output_file;
-    std::string LogFilePath;
-    std::ofstream Log_file;
-    std::string CurrentFile;
+    // Internal variable members
+    std::vector<XstrPair> m_xstrList;
+    int m_counter = 0;
+    std::ofstream m_outputFile;
+    std::string m_logFilePath;
+    std::ofstream m_logFile;
+    std::string m_currentFile;
 
-    struct regexPattern {
+    // Struct for storing regex patterns and associated information
+    struct RegexPattern {
         std::regex pattern;
         int string_position;
         int id_position;
@@ -112,13 +118,14 @@ private:
         std::string pattern_string;
     };
 
-    std::string Output_filepath;
-    std::string Output_filename;
-    int Offset = 0;
-    bool Replace_existing = false;
-    bool Comprehensive_scan = false;
-    bool Fill_empty_ids = false;
-    std::vector<std::string> Valid_extensions;
-    std::vector<regexPattern> Valid_patterns;
-    std::string Input_path;
+    // User options members
+    std::string m_outputFilepath;
+    std::string m_outputFilename;
+    std::string m_inputFilepath;
+    int m_offset = 0;
+    bool m_replaceExisting = false;
+    bool m_comprehensiveScan = false;
+    bool m_fillEmptyIds = false;
+    std::vector<std::string> m_validExtensions;
+    std::vector<RegexPattern> m_validPatterns;
 };

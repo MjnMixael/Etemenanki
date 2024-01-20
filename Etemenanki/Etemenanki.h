@@ -27,74 +27,82 @@ class Etemenanki : public QMainWindow
 
 public:
     Etemenanki(QWidget *parent = nullptr);
-    QThread* XSTR_thread;
 
-    void set_comprehensive(bool val);
-    bool get_comprehensive();
-
-    void set_fill_in_ids(bool val);
-    bool get_fill_in_ids();
-
-    void toggle_offset_control(bool val);
+    // Pass controls from Settings.cpp
+    void setComprehensive(bool val);
+    bool getComprehensive();
+    void setFillInIds(bool val);
+    bool getFillInIds();
+    void toggleOffsetControl(bool val);
 
 public slots:
+    // File extensions widget
     void on_files_add_button_clicked();
     void on_files_update_button_clicked();
     void on_files_remove_button_clicked();
     void on_files_list_widget_clicked();
 
+    // Regex table widget
     void on_regex_add_button_clicked();
     void on_regex_update_button_clicked();
     void on_regex_remove_button_clicked();
     void on_regex_table_widget_clicked();
 
+    // Begin button
     void on_begin_button_clicked();
 
-    void updateTerminalOutput(const QString& text);
+    // Terminal convenience
+    void update_terminal_output(const QString& text);
 
-    void runXSTR();
+    // Calls the xstr processing thread
+    void run_xstr();
 
     // Menu actions
-    void uiSaveSettings();
-    void uiOpenDocumentation();
-    void uiOpenPreferences();
+    void ui_save_settings();
+    void ui_open_documentation();
+    void ui_open_preferences();
 
 protected:
     void closeEvent(QCloseEvent* event) override;
 
 private:
-    QString Title = "Etemenanki";
-    QString Version = "v.1.2.0";
-    QString Description = "A translation tool for FreespaceOpen!";
     Ui::EtemenankiClass ui;
-    XstrProcessor* xstrProcessor;
-    QThread* processor;
-    QString AppDataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/Etemenanki/";
-    QString SettingsFileName;
-    QString LogFileName;
-    QUrl Github = "https://github.com/MjnMixael/Etemenanki";
 
-    int regex_check_w = 23;
-    int regex_position_w = 40;
+    // Generic UI and application settings
+    QString m_title = "Etemenanki";
+    QString m_version = "v.1.2.0";
+    QString m_description = "A translation tool for FreespaceOpen!";
+    QString m_appDataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/Etemenanki/";
+    QString m_settingsFileName = "settings.json";
+    QString m_settingsFilePath;
+    QString m_logFileName = "Etemenanki.log";
+    QString m_logFilePath;
+    QUrl m_githubUrl = "https://github.com/MjnMixael/Etemenanki";
+    int m_regexCheckWidth = 23;
+    int m_regexPositionWidth = 40;
 
+    // Thread pointers
+    XstrProcessor* m_xstrProcessor;
+    QThread* m_xstrThread;
+
+    // UI control methods
     void toggleControls(bool val);
-    bool add_regex_row(QString pattern, QString string_pos, QString id_pos, bool checked = true, int row = -1);
+    bool addRegexRow(QString pattern, QString string_pos, QString id_pos, bool checked = true, int row = -1);
     bool isRowChecked(int row);
-    void add_file_extension(QString ext);
+    void addFileExtension(QString ext);
     void loadSettings();
     void saveSettings();
-
     void resetInterface();
 
-    // Default values
-    QString defaultOutputFile = "tstrings.tbl";
-    QString defaultOutputDirectory = "";
-    QString defaultOffset = "0";
-    bool defaultReplacement = false;
-    bool comprehensiveScan = false;
-    bool fillInIds = false;
-    QStringList defaultExtensions = { ".tbl", ".tbm", ".fs2", ".fc2" };
-    QJsonObject defaultRegex() {
+    // Default user values
+    QString m_defaultOutputFile = "tstrings.tbl";
+    QString m_defaultOutputDirectory = "";
+    QString m_defaultOffset = "0";
+    bool m_defaultReplacement = false;
+    bool m_comprehensiveScan = false;
+    bool m_fillInIds = false;
+    QStringList m_defaultExtensions = { ".tbl", ".tbm", ".fs2", ".fc2" };
+    QJsonObject m_defaultRegex() {
         QJsonObject obj;
         obj["regex_string"] = "XSTR\\(\"([^\"]+)\",\\s*(-?\\d+)\\)";
         obj["string_position"] = 1;

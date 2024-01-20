@@ -819,7 +819,7 @@ Make sure your directory path is correct!</string>
    <sender>actionSave_Settings</sender>
    <signal>triggered()</signal>
    <receiver>EtemenankiClass</receiver>
-   <slot>uiSaveSettings()</slot>
+   <slot>ui_save_settings()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>
@@ -835,7 +835,7 @@ Make sure your directory path is correct!</string>
    <sender>actionAbout</sender>
    <signal>triggered()</signal>
    <receiver>EtemenankiClass</receiver>
-   <slot>uiOpenDocumentation()</slot>
+   <slot>ui_open_documentation()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>
@@ -851,7 +851,7 @@ Make sure your directory path is correct!</string>
    <sender>actionPreferences</sender>
    <signal>triggered()</signal>
    <receiver>EtemenankiClass</receiver>
-   <slot>uiOpenPreferences()</slot>
+   <slot>ui_open_preferences()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>
@@ -865,8 +865,8 @@ Make sure your directory path is correct!</string>
   </connection>
  </connections>
  <slots>
-  <slot>uiSaveSettings()</slot>
-  <slot>uiOpenDocumentation()</slot>
-  <slot>uiOpenPreferences()</slot>
+  <slot>ui_save_settings()</slot>
+  <slot>ui_open_documentation()</slot>
+  <slot>ui_open_preferences()</slot>
  </slots>
 </ui>

@@ -8,59 +8,59 @@
 #include "xstr.h"
 
 bool XstrProcessor::isRunning() {
-    return continueProcessing == true;
+    return g_continueProcessing == true;
 }
 
 void XstrProcessor::setLogFilePath(QString path) {
-    LogFilePath = path.toStdString();
+    m_logFilePath = path.toStdString();
 }
 
 void XstrProcessor::setInputPath(std::string path) {
-    Input_path = path;
+    m_inputFilepath = path;
 }
 
 void XstrProcessor::setOutputFilepath(std::string path) {
     if (!path.empty() && path.back() != '\\') {
         path += '\\';
     }
-    Output_filepath = path;
+    m_outputFilepath = path;
 }
 
 void XstrProcessor::setOutputFilename(std::string file) {
-    Output_filename = file;
+    m_outputFilename = file;
 }
 
 void XstrProcessor::setReplaceExisting(bool val) {
-    Replace_existing = val;
+    m_replaceExisting = val;
 }
 
 void XstrProcessor::setComprehensiveScan(bool val) {
-    Comprehensive_scan = val;
+    m_comprehensiveScan = val;
 }
 
 void XstrProcessor::setFillEmptyIds(bool val) {
-    Fill_empty_ids = val;
+    m_fillEmptyIds = val;
 }
 
 void XstrProcessor::setOffset(int val) {
-    Offset = val;
+    m_offset = val;
 }
 
 int XstrProcessor::getNumFileExtensions() {
-    return static_cast<int>(Valid_extensions.size());
+    return static_cast<int>(m_validExtensions.size());
 }
 
 int XstrProcessor::getNumRegexPatterns() {
-    return static_cast<int>(Valid_patterns.size());
+    return static_cast<int>(m_validPatterns.size());
 }
 
 void XstrProcessor::clearVectors() {
-    Valid_extensions.clear();
-    Valid_patterns.clear();
+    m_validExtensions.clear();
+    m_validPatterns.clear();
 }
 
 void XstrProcessor::addFileExtension(std::string ext) {
-    Valid_extensions.push_back(ext);
+    m_validExtensions.push_back(ext);
 }
 void XstrProcessor::addRegexPattern(std::string pattern, int string_pos, int id_pos, int idx) {
     std::regex reg;
@@ -71,18 +71,18 @@ void XstrProcessor::addRegexPattern(std::string pattern, int string_pos, int id_
         //std::cerr << "Regex error: " << e.what() << std::endl;
         return;
     }
-    regexPattern thisPattern = { reg, string_pos, id_pos, idx, pattern };
-    Valid_patterns.push_back(thisPattern);
+    RegexPattern thisPattern = { reg, string_pos, id_pos, idx, pattern };
+    m_validPatterns.push_back(thisPattern);
 }
 
 void XstrProcessor::setTerminalText(const std::string &text) {
     QString msg = QString::fromStdString(text);
-    emit updateTerminalText(msg);
+    emit update_terminal_text(msg);
 }
 
 void XstrProcessor::logEntry(const std::string& text, bool update_terminal) {
-    if (Log_file.is_open()) {
-        Log_file << text << std::endl;
+    if (m_logFile.is_open()) {
+        m_logFile << text << std::endl;
     }
     if (update_terminal) {
         setTerminalText(text);
@@ -95,22 +95,22 @@ void XstrProcessor::savePair(const std::string& line, int id) {
         id = -1;
     }
 
-    xstrPair newPair;
+    XstrPair newPair;
     newPair.id = id;
     newPair.text = line;
-    newPair.file = CurrentFile;
+    newPair.file = m_currentFile;
 
-    XSTR_list.push_back(newPair);
+    m_xstrList.push_back(newPair);
 }
 
 void XstrProcessor::writePair(const std::string& line, const int& id) {
-    xstrPair* thisPair = findPair(line);
+    XstrPair* thisPair = findPair(line);
     // Everything should be validated by now but just to be sure...
     if (thisPair != nullptr) {
         // Only write if we haven't written it yet
         if (!thisPair->printed) {
             thisPair->printed = true;
-            Output_file << thisPair->id << ", \"" << thisPair->text << "\"" << std::endl;
+            m_outputFile << thisPair->id << ", \"" << thisPair->text << "\"" << std::endl;
         }
     }
     else {
@@ -121,29 +121,29 @@ void XstrProcessor::writePair(const std::string& line, const int& id) {
 }
 
 int XstrProcessor::getNewId() {
-    int new_id = Offset + Counter++;
+    int newId = m_offset + m_counter++;
 
-    while (findPair(new_id) != nullptr) {
-        new_id = Offset + Counter++;
+    while (findPair(newId) != nullptr) {
+        newId = m_offset + m_counter++;
     }
 
-    return new_id;
+    return newId;
 }
 
-xstrPair* XstrProcessor::findPair(const std::string& text) {
-    for (size_t i = 0; i < XSTR_list.size(); i++) {
-        if (XSTR_list[i].text == text) {
-            return &XSTR_list[i];
+XstrPair* XstrProcessor::findPair(const std::string& text) {
+    for (size_t i = 0; i < m_xstrList.size(); i++) {
+        if (m_xstrList[i].text == text) {
+            return &m_xstrList[i];
         }
     }
 
     return nullptr;
 }
 
-xstrPair* XstrProcessor::findPair(const int& id) {
-    for (size_t i = 0; i < XSTR_list.size(); i++) {
-        if (XSTR_list[i].id == id) {
-            return &XSTR_list[i];
+XstrPair* XstrProcessor::findPair(const int& id) {
+    for (size_t i = 0; i < m_xstrList.size(); i++) {
+        if (m_xstrList[i].id == id) {
+            return &m_xstrList[i];
         }
     }
 
@@ -151,8 +151,8 @@ xstrPair* XstrProcessor::findPair(const int& id) {
 }
 
 void XstrProcessor::updateIds() {
-    if (Replace_existing) {
-        for (auto& pair : XSTR_list) {
+    if (m_replaceExisting) {
+        for (auto& pair : m_xstrList) {
             pair.id = getNewId();
         }
     } else {
@@ -160,7 +160,7 @@ void XstrProcessor::updateIds() {
         int maxId = -1;
 
         // Identify maxId and build a set of existing IDs
-        for (const auto& pair : XSTR_list) {
+        for (const auto& pair : m_xstrList) {
             if (pair.id >= 0) {
                 existingIds.insert(pair.id);
                 maxId = std::max(maxId, pair.id);
@@ -168,14 +168,7 @@ void XstrProcessor::updateIds() {
         }
 
         // Set Counter to maxId to save time generating new IDs
-        Counter = maxId;
-
-        // If we are filling in empty ids then set Offset to 0 to ensure
-        // there are no breaks between the highest existing Id and the next one
-        // generated after all missing Ids are used up
-        if (Fill_empty_ids) {
-            Offset = 0;
-        }
+        m_counter = maxId;
 
         std::set<int> missingIds;
 
@@ -187,9 +180,9 @@ void XstrProcessor::updateIds() {
         }
 
         // Assign new IDs
-        for (auto& pair : XSTR_list) {
+        for (auto& pair : m_xstrList) {
             if (pair.id < 0) {
-                if (Fill_empty_ids && !missingIds.empty()) {
+                if (m_fillEmptyIds && !missingIds.empty()) {
                     pair.id = *missingIds.begin();
                     missingIds.erase(missingIds.begin());
                 } else {
@@ -202,7 +195,7 @@ void XstrProcessor::updateIds() {
 
 
 void XstrProcessor::validateXSTR(const std::string& line, int& id) {
-    xstrPair* thisPair = findPair(line);
+    XstrPair* thisPair = findPair(line);
 
     if (thisPair == nullptr) {
         // Didn't find a string match. Now check for duplicate IDs
@@ -210,14 +203,14 @@ void XstrProcessor::validateXSTR(const std::string& line, int& id) {
         if (thisPair == nullptr) {
             // This pair is valid and brand new, but we should verify it's ID is valid first
             // However, if this is a comprehensive scan then we just save the -1 and adjust later
-            if (!Comprehensive_scan && (id < 0)) {
+            if (!m_comprehensiveScan && (id < 0)) {
                 id = getNewId();
             }
             savePair(line, id);
         } else {
             // The ID matches, but the strings didn't so this is an invalid ID. Time to get a new one
             // However if this is a comprehensive scan then we just save as -1 because it'll get adjusted later
-            if (!Comprehensive_scan) {
+            if (!m_comprehensiveScan) {
                 id = getNewId();
             } else {
                 id = -1;
@@ -229,7 +222,7 @@ void XstrProcessor::validateXSTR(const std::string& line, int& id) {
         if (thisPair->id == id) {
             // It does, but is it a valid id?
             // However in a comprehensive scan we can just keep it as -1 because it'll get adjusted later
-            if (!Comprehensive_scan && (id < 0)) {
+            if (!m_comprehensiveScan && (id < 0)) {
                 // ID is not valid, so we need a new one and update both
                 id = getNewId();
                 thisPair->id = id;
@@ -245,7 +238,7 @@ void XstrProcessor::validateXSTR(const std::string& line, int& id) {
                 } else {
                     // Neither was valid so now we need a new ID and to update both
                     // However in a comprehensive scan we can just keep it as -1 because it'll get adjusted later
-                    if (!Comprehensive_scan) {
+                    if (!m_comprehensiveScan) {
                         id = getNewId();
                         thisPair->id = id;
                     }
@@ -255,13 +248,13 @@ void XstrProcessor::validateXSTR(const std::string& line, int& id) {
     }
 }
 
-std::string XstrProcessor::replacePattern(const std::string& input, const std::string& somestring, int counter) {
+std::string XstrProcessor::replacePattern(const std::string& input, const std::string& current_string, const int& current_id) {
     std::regex pattern("\"([^\"]+)\",\\s*(-?\\d+)");
     std::smatch match;
 
     if (std::regex_search(input, match, pattern)) {
         // Replace the original number with the new one
-        return std::regex_replace(input, pattern, "\"" + somestring + "\", " + std::to_string(counter));
+        return std::regex_replace(input, pattern, "\"" + current_string + "\", " + std::to_string(current_id));
     }
 
     return input;
@@ -270,8 +263,8 @@ std::string XstrProcessor::replacePattern(const std::string& input, const std::s
 void XstrProcessor::replaceLineID(std::string& line, const std::string& current_string, int& current_id) {
     // In a comprehensive run then validation is already complete so
     // find the string in the list and use it's xstr in all cases
-    if (Comprehensive_scan) {
-        xstrPair* thisPair = findPair(current_string);
+    if (m_comprehensiveScan) {
+        XstrPair* thisPair = findPair(current_string);
         if (thisPair != nullptr) {
             current_id = thisPair->id;
             line = replacePattern(line, current_string, current_id);
@@ -281,8 +274,8 @@ void XstrProcessor::replaceLineID(std::string& line, const std::string& current_
             logEntry(msg);
         }
     // If Replace_existing then everything gets a new ID
-    } else if (Replace_existing) {
-        current_id = Offset + Counter++;
+    } else if (m_replaceExisting) {
+        current_id = m_offset + m_counter++;
         validateXSTR(current_string, current_id);
         line = replacePattern(line, current_string, current_id);
     } else {
@@ -291,21 +284,21 @@ void XstrProcessor::replaceLineID(std::string& line, const std::string& current_
     }
 }
 
-void XstrProcessor::processFile(const fs::path& filePath, bool write) {
-    if (!continueProcessing) {
+void XstrProcessor::processFile(const fs::path& file_path, bool write) {
+    if (!g_continueProcessing) {
         return;
     }
 
     // Skip the file if it is our output file
-    std::string thisPath = filePath.string();
-    std::string outputPath = Output_filepath + Output_filename;
+    std::string thisPath = file_path.string();
+    std::string outputPath = m_outputFilepath + m_outputFilename;
     if (thisPath == outputPath) {
         return;
     }
 
-    std::ifstream inputFile(filePath);
+    std::ifstream inputFile(file_path);
     if (!inputFile.is_open()) {
-        std::string msg = "Error opening file: " + filePath.string();
+        std::string msg = "Error opening file: " + file_path.string();
         setTerminalText(msg);
         return;
     }
@@ -317,28 +310,28 @@ void XstrProcessor::processFile(const fs::path& filePath, bool write) {
 
     // Print to the terminal
     if (write) {
-        msg = "Processing file: " + filePath.filename().string();
+        msg = "Processing file: " + file_path.filename().string();
     } else {
-        msg = "Reading file: " + filePath.filename().string();
+        msg = "Reading file: " + file_path.filename().string();
     }
     
     logEntry(msg);
 
     std::string line;
     while (std::getline(inputFile, line)) {
-        for (const auto& set : Valid_patterns) {
+        for (const auto& set : m_validPatterns) {
             std::smatch match;
-            if (continueProcessing && std::regex_search(line, match, set.pattern)) {
+            if (g_continueProcessing && std::regex_search(line, match, set.pattern)) {
 
                 if (!found) {
                     found = true;
 
                     // Save the filename to a global member
-                    CurrentFile = filePath.filename().string();
+                    m_currentFile = file_path.filename().string();
 
                     // List the filename we found a match in
                     if (write) {
-                        Output_file << ";;" << CurrentFile << std::endl;
+                        m_outputFile << ";;" << m_currentFile << std::endl;
                     }
 
                     // Print to the terminal
@@ -346,12 +339,12 @@ void XstrProcessor::processFile(const fs::path& filePath, bool write) {
                     logEntry(msg, false);
                 }
 
-                std::string current_string = match[set.string_position].str();
-                std::string current_id = match[set.id_position].str();
+                std::string currentString = match[set.string_position].str();
+                std::string currentId = match[set.id_position].str();
 
                 int id;
                 try {
-                    id = std::stoi(current_id);
+                    id = std::stoi(currentId);
                 }
                 catch (const std::invalid_argument& e) {
                     std::string error = e.what();
@@ -376,10 +369,10 @@ void XstrProcessor::processFile(const fs::path& filePath, bool write) {
                 }
 
                 if (write) {
-                    replaceLineID(line, current_string, id);
-                    writePair(current_string, id);
+                    replaceLineID(line, currentString, id);
+                    writePair(currentString, id);
                 } else {
-                    validateXSTR(current_string, id);
+                    validateXSTR(currentString, id);
                 }
             }
         }
@@ -391,9 +384,9 @@ void XstrProcessor::processFile(const fs::path& filePath, bool write) {
 
     if (write && found) {
         // Write the modified content back to the file
-        std::ofstream outputFile(filePath, std::ofstream::trunc);
+        std::ofstream outputFile(file_path, std::ofstream::trunc);
         if (!outputFile.is_open()) {
-            msg = "Error saving file: " + filePath.string();
+            msg = "Error saving file: " + file_path.string();
             logEntry(msg, false);
             return;
         }
@@ -402,13 +395,13 @@ void XstrProcessor::processFile(const fs::path& filePath, bool write) {
         outputFile.close();
     }
 
-    msg = "Processing completed for file: " + filePath.string();
+    msg = "Processing completed for file: " + file_path.string();
     logEntry(msg, false);
 }
 
 
 bool XstrProcessor::isExtensionValid(const std::string& extension) {
-    for (auto ext : Valid_extensions) {
+    for (auto ext : m_validExtensions) {
         if (extension == ext) {
             return true;
         }
@@ -417,10 +410,10 @@ bool XstrProcessor::isExtensionValid(const std::string& extension) {
     return false;
 }
 
-void XstrProcessor::processDirectory(const fs::path& directoryPath, bool write) {
-    setTerminalText(Input_path);
-    for (const auto& entry : fs::recursive_directory_iterator(directoryPath)) {
-        if (!continueProcessing) {
+void XstrProcessor::processDirectory(const fs::path& directory_path, bool write) {
+    setTerminalText(m_inputFilepath);
+    for (const auto& entry : fs::recursive_directory_iterator(directory_path)) {
+        if (!g_continueProcessing) {
             return;
         }
         if (entry.is_regular_file()) {
@@ -435,74 +428,88 @@ void XstrProcessor::processDirectory(const fs::path& directoryPath, bool write) 
 }
 
 void XstrProcessor::run() {
-    Log_file.open(LogFilePath);
-    if (!Log_file.is_open()) {
+    m_logFile.open(m_logFilePath);
+    if (!m_logFile.is_open()) {
         logEntry("Error creating log file!");
-        Log_file.close();
-        continueProcessing = false;
+        m_logFile.close();
+        g_continueProcessing = false;
         return;
     }
 
-    std::string fullPath = Output_filepath + Output_filename;
+    std::string fullPath = m_outputFilepath + m_outputFilename;
 
-    Output_file.open(fullPath);
+    m_outputFile.open(fullPath);
 
-    fs::path directoryPath = Input_path;
+    fs::path directoryPath = m_inputFilepath;
     if (!fs::is_directory(directoryPath)) {
         logEntry("Invalid directory path.");
-        continueProcessing = false;
+        g_continueProcessing = false;
         return;
     }
 
-    if (!Output_file.is_open()) {
+    if (!m_outputFile.is_open()) {
         logEntry("Error creating output file!");
-        Output_file.close();
-        continueProcessing = false;
+        m_outputFile.close();
+        g_continueProcessing = false;
         return;
     }
 
     // Log our settings for this run...
     logEntry("Initializing settings...", false);
-    std::string thisPath = "Directory: " + Input_path;
+    std::string thisPath = "Directory: " + m_inputFilepath;
     logEntry(thisPath, false);
     std::string thisFile = "Output File: " + fullPath;
     logEntry(thisFile, false);
-    std::string thisOffset = "Starting new XSTR IDs at " + Offset;
+
+    if (m_comprehensiveScan) {
+        logEntry("Doing comprehensive scan!", false);
+    }
+
+    if (m_fillEmptyIds) {
+        logEntry("Attempting to use all empty IDs!", false);
+
+        // If we are filling in empty ids then set Offset to 0 to ensure
+        // there are no breaks between the highest existing Id and the next one
+        // generated after all missing Ids are used up
+        m_offset = 0;
+    }
+
+    std::string thisOffset = "Starting new XSTR IDs at " + m_offset;
     logEntry(thisOffset, false);
     
     logEntry("List of extensions:", false);
-    for (auto ext : Valid_extensions) {
+    for (auto ext : m_validExtensions) {
         logEntry(ext, false);
     }
 
     logEntry("List of regex pattern settings", false);
-    for (auto set : Valid_patterns) {
-        std::string s_pos = "++String position: " + std::to_string(set.string_position);
-        std::string i_pos = "++ID position: " + std::to_string(set.id_position);
+    for (auto set : m_validPatterns) {
+        std::string stringPos = "++String position: " + std::to_string(set.string_position);
+        std::string idPos = "++ID position: " + std::to_string(set.id_position);
 
         logEntry(set.pattern_string, false);
-        logEntry(s_pos, false);
-        logEntry(i_pos, false);
+        logEntry(stringPos, false);
+        logEntry(idPos, false);
     }
 
     // If Replace Existing is set then comprehensive is pointless!
-    if (Replace_existing) {
-        Comprehensive_scan = false;
+    if (m_replaceExisting) {
+        m_comprehensiveScan = false;
     }
 
-    continueProcessing = true;
+    g_continueProcessing = true;
     logEntry("Running!", false);
 
-    Output_file << "#default\n" << std::endl;
+    m_outputFile << "#default\n" << std::endl;
 
     std::string msg = "";
 
     // Start the scan!
-    processDirectory(directoryPath, !Comprehensive_scan);
+    processDirectory(directoryPath, !m_comprehensiveScan);
 
     // If we're doing Comprehensive then we need to go again
     // but this time we'll actually write the files
-    if (continueProcessing && Comprehensive_scan) {
+    if (g_continueProcessing && m_comprehensiveScan) {
         // Write a message to the log and give the user a chance to cancel
         logEntry("Finished reading files! Processing...");
         std::this_thread::sleep_for(std::chrono::seconds(5));
@@ -516,13 +523,13 @@ void XstrProcessor::run() {
         processDirectory(directoryPath, true);
     }
 
-    Output_file << "\n#end" << std::endl;
-    Output_file.close();
+    m_outputFile << "\n#end" << std::endl;
+    m_outputFile.close();
 
-    msg = "Processing completed. Output saved to " + Output_filename;
+    msg = "Processing completed. Output saved to " + m_outputFilename;
     logEntry(msg);
-    Log_file.close();
+    m_logFile.close();
 
-    continueProcessing = false;
+    g_continueProcessing = false;
     return;
 }

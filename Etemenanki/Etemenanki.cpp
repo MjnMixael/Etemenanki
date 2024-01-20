@@ -7,7 +7,7 @@
 
 #include "Etemenanki.h"
 
-bool continueProcessing = false;
+bool g_continueProcessing = false;
 
 Etemenanki::Etemenanki(QWidget *parent)
     : QMainWindow(parent)
@@ -15,22 +15,22 @@ Etemenanki::Etemenanki(QWidget *parent)
     ui.setupUi(this);
 
     setWindowFlags(Qt::Window | Qt::MSWindowsFixedSizeDialogHint);
-    QString windowString = Title + " " + Version + " - " + Description;
+    QString windowString = m_title + " " + m_version + " - " + m_description;
     setWindowTitle(windowString);
 
-    SettingsFileName = AppDataPath + "settings.json";
-    LogFileName = AppDataPath + "Etemenanki.log";
+    m_settingsFilePath = m_appDataPath + m_settingsFileName;
+    m_logFilePath = m_appDataPath + m_logFileName;
 
     // Set some ui configurations
     ui.offset_line_edit->setValidator(new QIntValidator(0, 9999999, this));
     ui.position_string_line_edit->setValidator(new QIntValidator(0, 9, this));
     ui.position_id_line_edit->setValidator(new QIntValidator(0, 9, this));
-    ui.regex_table_widget->setColumnWidth(0, regex_check_w);
+    ui.regex_table_widget->setColumnWidth(0, m_regexCheckWidth);
     int scrollBarWidth = qApp->style()->pixelMetric(QStyle::PM_ScrollBarExtent);
-    int regex_main_w = (ui.regex_table_widget->width() - ((regex_position_w * 2) + regex_check_w + scrollBarWidth));
-    ui.regex_table_widget->setColumnWidth(1, regex_main_w);
-    ui.regex_table_widget->setColumnWidth(2, regex_position_w);
-    ui.regex_table_widget->setColumnWidth(3, regex_position_w);
+    int regexMainWidth = (ui.regex_table_widget->width() - ((m_regexPositionWidth * 2) + m_regexCheckWidth + scrollBarWidth));
+    ui.regex_table_widget->setColumnWidth(1, regexMainWidth);
+    ui.regex_table_widget->setColumnWidth(2, m_regexPositionWidth);
+    ui.regex_table_widget->setColumnWidth(3, m_regexPositionWidth);
 
     // Load user settings and/or defaults
     loadSettings();
@@ -42,35 +42,35 @@ Etemenanki::Etemenanki(QWidget *parent)
     ui.files_remove_button->setEnabled(false);
 
     // Maybe disable offset
-    toggle_offset_control(!fillInIds);
+    toggleOffsetControl(!m_fillInIds);
 
     //Create the processor thread
-    xstrProcessor = new XstrProcessor(this);
-    connect(xstrProcessor, &XstrProcessor::updateTerminalText, this, &Etemenanki::updateTerminalOutput);
+    m_xstrProcessor = new XstrProcessor(this);
+    connect(m_xstrProcessor, &XstrProcessor::update_terminal_text, this, &Etemenanki::update_terminal_output);
 
-    xstrProcessor->setLogFilePath(LogFileName);
+    m_xstrProcessor->setLogFilePath(m_logFilePath);
 }
 
-void Etemenanki::runXSTR() {
-    xstrProcessor->run();
+void Etemenanki::run_xstr() {
+    m_xstrProcessor->run();
 }
 
-void Etemenanki::uiSaveSettings() {
+void Etemenanki::ui_save_settings() {
     saveSettings();
 }
 
-void Etemenanki::uiOpenDocumentation() {
-    QDesktopServices::openUrl(Github);
+void Etemenanki::ui_open_documentation() {
+    QDesktopServices::openUrl(m_githubUrl);
 }
 
-void Etemenanki::uiOpenPreferences() {
+void Etemenanki::ui_open_preferences() {
     SettingsDialog dialog(this, this);
     dialog.exec();
 }
 
 void Etemenanki::closeEvent(QCloseEvent* event) {
-    if (xstrProcessor->isRunning()) {
-        continueProcessing = false;
+    if (m_xstrProcessor->isRunning()) {
+        g_continueProcessing = false;
         resetInterface();
     }
 
@@ -81,29 +81,29 @@ void Etemenanki::resetInterface() {
     ui.begin_button->setEnabled(false);
     ui.begin_button->setText("Waiting...");
 
-    XSTR_thread->wait();
-    delete XSTR_thread;
+    m_xstrThread->wait();
+    delete m_xstrThread;
 
     ui.begin_button->setText("Run");
     ui.begin_button->setEnabled(true);
     toggleControls(true);
 }
 
-void Etemenanki::set_comprehensive(bool val) {
-    comprehensiveScan = val;
+void Etemenanki::setComprehensive(bool val) {
+    m_comprehensiveScan = val;
 }
-bool Etemenanki::get_comprehensive() {
-    return comprehensiveScan;
-}
-
-void Etemenanki::set_fill_in_ids(bool val) {
-    fillInIds = val;
-}
-bool Etemenanki::get_fill_in_ids() {
-    return fillInIds;
+bool Etemenanki::getComprehensive() {
+    return m_comprehensiveScan;
 }
 
-void Etemenanki::toggle_offset_control(bool val) {
+void Etemenanki::setFillInIds(bool val) {
+    m_fillInIds = val;
+}
+bool Etemenanki::getFillInIds() {
+    return m_fillInIds;
+}
+
+void Etemenanki::toggleOffsetControl(bool val) {
     ui.offset_line_edit->setEnabled(val);
 }
 
@@ -117,7 +117,7 @@ bool itemExists(QListWidget* listWidget, const QString& textToCheck) {
     return false;  // Item does not exist
 }
 
-void Etemenanki::add_file_extension(QString ext) {
+void Etemenanki::addFileExtension(QString ext) {
     if (ext.at(0) != ".") {
         ext.prepend(".");
     }
@@ -130,10 +130,10 @@ void Etemenanki::add_file_extension(QString ext) {
 void Etemenanki::on_files_add_button_clicked() {
     QString ext = ui.files_line_edit->text();
 
-    add_file_extension(ext);
+    addFileExtension(ext);
 
     ui.files_line_edit->clear();
-    updateTerminalOutput("New file extension added!");
+    update_terminal_output("New file extension added!");
 }
 
 void Etemenanki::on_files_update_button_clicked() {
@@ -150,7 +150,7 @@ void Etemenanki::on_files_update_button_clicked() {
         ui.files_update_button->setEnabled(false);
         ui.files_remove_button->setEnabled(false);
         ui.files_list_widget->clearSelection();
-        updateTerminalOutput("File extension updated!");
+        update_terminal_output("File extension updated!");
     }
 }
 
@@ -160,7 +160,7 @@ void Etemenanki::on_files_remove_button_clicked() {
     ui.files_update_button->setEnabled(false);
     ui.files_remove_button->setEnabled(false);
     ui.files_list_widget->clearSelection();
-    updateTerminalOutput("File extension removed!");
+    update_terminal_output("File extension removed!");
 }
 
 void Etemenanki::on_files_list_widget_clicked() {
@@ -176,7 +176,7 @@ bool itemExists(QTableWidget* tableWidget, const QString& textToCheck) {
     return !items.isEmpty();  // If items list is not empty, the item exists
 }
 
-bool Etemenanki::add_regex_row(QString pattern, QString string_pos, QString id_pos, bool checked, int row) {
+bool Etemenanki::addRegexRow(QString pattern, QString string_pos, QString id_pos, bool checked, int row) {
     if (pattern.isEmpty()) {
         return false;
     }
@@ -196,7 +196,7 @@ bool Etemenanki::add_regex_row(QString pattern, QString string_pos, QString id_p
     }
     catch (const std::regex_error& e) {
         //std::cerr << "Regex error: " << e.what() << std::endl;
-        updateTerminalOutput("Error validating regular expression!");
+        update_terminal_output("Error validating regular expression!");
         return false;
     }
 
@@ -237,11 +237,11 @@ void Etemenanki::on_regex_add_button_clicked() {
     QString string_pos = ui.position_string_line_edit->text();
     QString id_pos = ui.position_id_line_edit->text();
 
-    if (add_regex_row(regex, string_pos, id_pos)) {
+    if (addRegexRow(regex, string_pos, id_pos)) {
         ui.regex_line_edit->clear();
         ui.position_string_line_edit->clear();
         ui.position_id_line_edit->clear();
-        updateTerminalOutput("New regular expression added!");
+        update_terminal_output("New regular expression added!");
     }
 }
 
@@ -252,14 +252,14 @@ void Etemenanki::on_regex_update_button_clicked() {
     QString id_pos = ui.position_id_line_edit->text();
     bool checked = isRowChecked(i);
 
-    if (add_regex_row(regex, string_pos, id_pos, checked, i)) {
+    if (addRegexRow(regex, string_pos, id_pos, checked, i)) {
         ui.regex_line_edit->clear();
         ui.position_string_line_edit->clear();
         ui.position_id_line_edit->clear();
         ui.regex_update_button->setEnabled(false);
         ui.regex_remove_button->setEnabled(false);
         ui.regex_table_widget->clearSelection();
-        updateTerminalOutput("Regular expression updated!");
+        update_terminal_output("Regular expression updated!");
     }
 }
 
@@ -271,7 +271,7 @@ void Etemenanki::on_regex_remove_button_clicked() {
     ui.regex_update_button->setEnabled(false);
     ui.regex_remove_button->setEnabled(false);
     ui.regex_table_widget->clearSelection();
-    updateTerminalOutput("Regular expression removed!");
+    update_terminal_output("Regular expression removed!");
 }
 
 void Etemenanki::on_regex_table_widget_clicked() {
@@ -294,13 +294,13 @@ bool Etemenanki::isRowChecked(int row) {
 }
 
 void Etemenanki::on_begin_button_clicked() {
-    if (xstrProcessor->isRunning()) {
+    if (m_xstrProcessor->isRunning()) {
         ui.begin_button->setEnabled(false); // Prevent double clicks
-        continueProcessing = false;
+        g_continueProcessing = false;
         return;
     }
 
-    xstrProcessor->clearVectors();
+    m_xstrProcessor->clearVectors();
     
     // Get values from UI
     QString directory = ui.directory_line_edit->text();
@@ -311,72 +311,72 @@ void Etemenanki::on_begin_button_clicked() {
 
     // Validate values
     if (directory.isEmpty()) {
-        updateTerminalOutput("No directory provided!");
+        update_terminal_output("No directory provided!");
         return;
     }
 
     if (outputFile.isEmpty()) {
-        updateTerminalOutput("Output not provided. Using default!");
+        update_terminal_output("Output not provided. Using default!");
         outputFile = "tstrings.tbl";
         return;
     }
 
     if (offset.isEmpty()) {
-        updateTerminalOutput("Offset not provided. Setting to 0!");
+        update_terminal_output("Offset not provided. Setting to 0!");
         offset = "1";
         return;
     }
     
     // Set internal values
-    xstrProcessor->setInputPath(directory.toStdString());
-    xstrProcessor->setOutputFilepath(outputDirectory.toStdString());
-    xstrProcessor->setOutputFilename(outputFile.toStdString());
-    xstrProcessor->setOffset(offset.toInt());
-    xstrProcessor->setReplaceExisting(replace);
-    xstrProcessor->setComprehensiveScan(comprehensiveScan);
-    xstrProcessor->setFillEmptyIds(fillInIds);
+    m_xstrProcessor->setInputPath(directory.toStdString());
+    m_xstrProcessor->setOutputFilepath(outputDirectory.toStdString());
+    m_xstrProcessor->setOutputFilename(outputFile.toStdString());
+    m_xstrProcessor->setOffset(offset.toInt());
+    m_xstrProcessor->setReplaceExisting(replace);
+    m_xstrProcessor->setComprehensiveScan(m_comprehensiveScan);
+    m_xstrProcessor->setFillEmptyIds(m_fillInIds);
 
     for (int i = 0; i < ui.files_list_widget->count(); ++i) {
         std::string ext = ui.files_list_widget->item(i)->text().toStdString();
-        xstrProcessor->addFileExtension(ext);
+        m_xstrProcessor->addFileExtension(ext);
     }
 
     for (int i = 0; i < ui.regex_table_widget->rowCount(); ++i) {
         if (isRowChecked(i)) {
             std::string pattern = ui.regex_table_widget->item(i, 1)->text().toStdString();
-            std::string string_pos = ui.regex_table_widget->item(i, 2)->text().toStdString();
-            std::string id_pos = ui.regex_table_widget->item(i, 3)->text().toStdString();
+            std::string stringPos = ui.regex_table_widget->item(i, 2)->text().toStdString();
+            std::string idPos = ui.regex_table_widget->item(i, 3)->text().toStdString();
 
-            int pos = std::stoi(string_pos);
-            int id = std::stoi(id_pos);
+            int pos = std::stoi(stringPos);
+            int id = std::stoi(idPos);
 
-            xstrProcessor->addRegexPattern(pattern, pos, id, i);
+            m_xstrProcessor->addRegexPattern(pattern, pos, id, i);
         }
     }
 
     saveSettings();
 
-    if (xstrProcessor->getNumFileExtensions() <= 0) {
-        updateTerminalOutput("No file extensions provided!");
+    if (m_xstrProcessor->getNumFileExtensions() <= 0) {
+        update_terminal_output("No file extensions provided!");
         return;
     }
 
-    if (xstrProcessor->getNumRegexPatterns() <= 0) {
-        updateTerminalOutput("No active regex patterns provided!");
+    if (m_xstrProcessor->getNumRegexPatterns() <= 0) {
+        update_terminal_output("No active regex patterns provided!");
         return;
     }
 
     qDebug() << "Processing in thread:" << QThread::currentThreadId();
 
-    auto function = std::bind(&Etemenanki::runXSTR, this);
-    XSTR_thread = QThread::create(function);
+    auto function = std::bind(&Etemenanki::run_xstr, this);
+    m_xstrThread = QThread::create(function);
 
-    connect(XSTR_thread, &QThread::finished, this, [this]() {
-        continueProcessing = false;
+    connect(m_xstrThread, &QThread::finished, this, [this]() {
+        g_continueProcessing = false;
         resetInterface();
         });
 
-    XSTR_thread->start();
+    m_xstrThread->start();
 
     ui.begin_button->setText("Terminate");
     
@@ -397,7 +397,7 @@ void Etemenanki::toggleControls(bool val) {
     ui.regex_add_button->setEnabled(val);
     ui.regex_update_button->setEnabled(val);
     ui.regex_remove_button->setEnabled(val);
-    if (!fillInIds) {
+    if (!m_fillInIds) {
         ui.offset_line_edit->setEnabled(val);
     }
     ui.replace_radio_button->setEnabled(val);
@@ -406,13 +406,13 @@ void Etemenanki::toggleControls(bool val) {
     ui.actionPreferences->setEnabled(val);
 }
 
-void Etemenanki::updateTerminalOutput(const QString& text) {
+void Etemenanki::update_terminal_output(const QString& text) {
     ui.terminal_output->setText(text);
 }
 
 void Etemenanki::loadSettings() {
-    QDir().mkpath(QFileInfo(SettingsFileName).absolutePath()); // Ensure the directory exists
-    QFile file(SettingsFileName);
+    QDir().mkpath(QFileInfo(m_settingsFilePath).absolutePath()); // Ensure the directory exists
+    QFile file(m_settingsFilePath);
     
     QJsonObject settings = {};
     if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -420,13 +420,13 @@ void Etemenanki::loadSettings() {
         settings = doc.object();
     }  
     
-    ui.output_file_line_edit->setText(settings.value("outputFile").toString(defaultOutputFile));
-    ui.output_directory_line_edit->setText(settings.value("outputDirectory").toString(defaultOutputDirectory));
+    ui.output_file_line_edit->setText(settings.value("outputFile").toString(m_defaultOutputFile));
+    ui.output_directory_line_edit->setText(settings.value("outputDirectory").toString(m_defaultOutputDirectory));
     ui.directory_line_edit->setText(settings["directory"].toString());
-    ui.offset_line_edit->setText(settings.value("offset").toString(defaultOffset));
-    ui.replace_radio_button->setChecked(settings.value("replaceValues").toBool(defaultReplacement));
-    comprehensiveScan = settings.value("comprehensive").toBool(comprehensiveScan);
-    fillInIds = settings.value("fillInIds").toBool(fillInIds);
+    ui.offset_line_edit->setText(settings.value("offset").toString(m_defaultOffset));
+    ui.replace_radio_button->setChecked(settings.value("replaceValues").toBool(m_defaultReplacement));
+    m_comprehensiveScan = settings.value("comprehensive").toBool(m_comprehensiveScan);
+    m_fillInIds = settings.value("fillInIds").toBool(m_fillInIds);
 
     ui.files_list_widget->clear(); // Clear existing items before loading
     QJsonArray extensionsArray;
@@ -434,13 +434,13 @@ void Etemenanki::loadSettings() {
         extensionsArray = settings["file_extensions"].toArray();
     }
     else {
-        for (const QString& ext : defaultExtensions) {
+        for (const QString& ext : m_defaultExtensions) {
             extensionsArray.append(ext);
         }
     }
 
     for (const QJsonValue& value : extensionsArray) {
-        add_file_extension(value.toString());
+        addFileExtension(value.toString());
     }
 
     QJsonArray regexArray;
@@ -448,21 +448,21 @@ void Etemenanki::loadSettings() {
         regexArray = settings["regex_rules"].toArray();
     }
     else {
-        regexArray.append(defaultRegex());
+        regexArray.append(m_defaultRegex());
     }
 
     foreach(const QJsonValue & value, regexArray) {
         QJsonObject regexItem = value.toObject();
-        add_regex_row(regexItem["regex_string"].toString(), QString::number(regexItem["string_position"].toInt()), QString::number(regexItem["id_position"].toInt()), regexItem["checked"].toBool());
+        addRegexRow(regexItem["regex_string"].toString(), QString::number(regexItem["string_position"].toInt()), QString::number(regexItem["id_position"].toInt()), regexItem["checked"].toBool());
     }
 
     file.close();
 }
 
 void Etemenanki::saveSettings() {
-    QFile file(SettingsFileName);
+    QFile file(m_settingsFilePath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        updateTerminalOutput("Saving failed. Couldn't open save file...");
+        update_terminal_output("Saving failed. Couldn't open save file...");
         return;
     }
 
@@ -472,8 +472,8 @@ void Etemenanki::saveSettings() {
     settings["directory"] = ui.directory_line_edit->text();
     settings["offset"] = ui.offset_line_edit->text();
     settings["replaceValues"] = ui.replace_radio_button->isChecked();
-    settings["comprehensive"] = comprehensiveScan;
-    settings["fillInIds"] = fillInIds;
+    settings["comprehensive"] = m_comprehensiveScan;
+    settings["fillInIds"] = m_fillInIds;
 
     QJsonArray extensionsArray;
     for (int i = 0; i < ui.files_list_widget->count(); ++i) {
@@ -495,5 +495,5 @@ void Etemenanki::saveSettings() {
     QJsonDocument doc(settings);
     file.write(doc.toJson());
     file.close();
-    updateTerminalOutput("Settings saved!");
+    update_terminal_output("Settings saved!");
 }
