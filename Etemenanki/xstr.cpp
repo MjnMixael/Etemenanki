@@ -497,6 +497,7 @@ void XstrProcessor::run() {
         m_comprehensiveScan = false;
     }
 
+    // Notify that processing is starting
     g_continueProcessing = true;
     logEntry("Running!", false);
 
