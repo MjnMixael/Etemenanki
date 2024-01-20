@@ -17,9 +17,8 @@
 #include <chrono>
 
 #include <QThread>
-#include <QTimer>
 #include <QObject>
-#include <qdebug.h>
+#include <QDebug>
 
 namespace fs = std::filesystem;
 
