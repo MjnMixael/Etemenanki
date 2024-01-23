@@ -278,12 +278,26 @@
     <string>Output file header annotations</string>
    </property>
   </widget>
+  <widget class="QCheckBox" name="case_insensitive_button">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>200</y>
+     <width>261</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Use case-insensitive string comparisons</string>
+   </property>
+  </widget>
   <zorder>frame</zorder>
   <zorder>layoutWidget</zorder>
   <zorder>sorting_label</zorder>
   <zorder>sorting_combo_box</zorder>
   <zorder>verbose_comments_button</zorder>
   <zorder>header_comments_button</zorder>
+  <zorder>case_insensitive_button</zorder>
  </widget>
  <resources/>
  <connections>

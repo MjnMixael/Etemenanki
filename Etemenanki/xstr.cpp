@@ -58,6 +58,10 @@ void XstrProcessor::setReadOnlyToggle(bool val) {
     m_readOnly = val;
 }
 
+void XstrProcessor::setCaseInsensitiveToggle(bool val) {
+    m_caseInsensitive = val;
+}
+
 void XstrProcessor::setOffset(int val) {
     m_offset = val;
 }
@@ -151,10 +155,28 @@ void XstrProcessor::appendLocationToPair(XstrPair* this_pair) {
     }
 }
 
+bool XstrProcessor::caseInsensitiveStringCompare(const std::string& str1, const std::string& str2) {
+    std::string str1Lower = str1;
+    std::string str2Lower = str2;
+
+    // Convert both strings to lowercase
+    std::transform(str1Lower.begin(), str1Lower.end(), str1Lower.begin(), ::tolower);
+    std::transform(str2Lower.begin(), str2Lower.end(), str2Lower.begin(), ::tolower);
+
+    // Perform the comparison
+    return str1Lower == str2Lower;
+}
+
 XstrPair* XstrProcessor::findPair(const std::string& text) {
     for (size_t i = 0; i < m_xstrList.size(); i++) {
-        if (m_xstrList[i].text == text) {
-            return &m_xstrList[i];
+        if (m_caseInsensitive) {
+            if (caseInsensitiveStringCompare(m_xstrList[i].text, text)) {
+                return &m_xstrList[i];
+            }
+        } else {
+            if (m_xstrList[i].text == text) {
+                return &m_xstrList[i];
+            }
         }
     }
 

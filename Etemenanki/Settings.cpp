@@ -30,6 +30,8 @@ SettingsDialog::SettingsDialog(Etemenanki* m_etemenanki, QWidget* parent) : QDia
 
         ui.header_comments_button->setChecked(m_etemenanki->getHeaderAnnotations());
         ui.verbose_comments_button->setChecked(m_etemenanki->getVerboseAnnotations());
+
+        ui.case_insensitive_button->setChecked(m_etemenanki->getCaseInsensitive());
     }
 }
 

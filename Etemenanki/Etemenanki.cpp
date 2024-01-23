@@ -127,6 +127,13 @@ bool Etemenanki::getVerboseAnnotations() {
     return m_verboseAnnotations;
 }
 
+void Etemenanki::setCaseInsensitive(bool val) {
+    m_caseInsensitive = val;
+}
+bool Etemenanki::getCaseInsensitive() {
+    return m_caseInsensitive;
+}
+
 void Etemenanki::toggleOffsetControl(bool val) {
     ui.offset_line_edit->setEnabled(val);
 }
@@ -367,6 +374,7 @@ void Etemenanki::on_begin_button_clicked() {
     m_xstrProcessor->setHeadersToggle(m_headerAnnotations);
     m_xstrProcessor->setAnnotationsToggle(m_verboseAnnotations);
     m_xstrProcessor->setReadOnlyToggle(m_readOnly);
+    m_xstrProcessor->setCaseInsensitiveToggle(m_caseInsensitive);
 
     for (int i = 0; i < ui.files_list_widget->count(); ++i) {
         std::string ext = ui.files_list_widget->item(i)->text().toStdString();
@@ -464,6 +472,7 @@ void Etemenanki::loadSettings() {
     m_headerAnnotations = settings.value("headerAnnotations").toBool(m_headerAnnotations);
     m_verboseAnnotations = settings.value("verboseAnnotations").toBool(m_verboseAnnotations);
     m_readOnly = settings.value("readOnlyMode").toBool(m_readOnly);
+    m_caseInsensitive = settings.value("caseInsensitive").toBool(m_caseInsensitive);
 
     ui.files_list_widget->clear(); // Clear existing items before loading
     QJsonArray extensionsArray;
@@ -515,6 +524,7 @@ void Etemenanki::saveSettings() {
     settings["headerAnnotations"] = m_headerAnnotations;
     settings["verboseAnnotations"] = m_verboseAnnotations;
     settings["readOnlyMode"] = m_readOnly;
+    settings["caseInsensitive"] = m_caseInsensitive;
 
     QJsonArray extensionsArray;
     for (int i = 0; i < ui.files_list_widget->count(); ++i) {

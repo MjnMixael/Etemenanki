@@ -39,6 +39,8 @@ public:
     bool getHeaderAnnotations();
     void setVerboseAnnotations(bool val);
     bool getVerboseAnnotations();
+    void setCaseInsensitive(bool val);
+    bool getCaseInsensitive();
     void toggleOffsetControl(bool val);
 
 public slots:
@@ -114,6 +116,7 @@ private:
     bool m_headerAnnotations = true;
     bool m_verboseAnnotations = false;
     bool m_readOnly = false;
+    bool m_caseInsensitive = false;
     QStringList m_defaultExtensions = { ".tbl", ".tbm", ".fs2", ".fc2" };
     QJsonObject m_defaultRegex() {
         QJsonObject obj;

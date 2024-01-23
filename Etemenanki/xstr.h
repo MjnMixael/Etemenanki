@@ -66,6 +66,7 @@ public:
     void setHeadersToggle(bool val);
     void setAnnotationsToggle(bool val);
     void setReadOnlyToggle(bool val);
+    void setCaseInsensitiveToggle(bool val);
     void setOffset(int val);
     void setLogFilePath(QString path);
 
@@ -128,6 +129,9 @@ private:
     static bool compareById(const XstrPair& a, const XstrPair& b);
     static bool compareByFile(const XstrPair& a, const XstrPair& b);
 
+    // Case insensitive string comparison
+    bool caseInsensitiveStringCompare(const std::string& str1, const std::string& str2);
+
     // Internal variable members
     std::vector<XstrPair> m_xstrList;
     int m_counter = 0;
@@ -158,6 +162,7 @@ private:
     bool m_headerAnnotations = true;
     bool m_verboseAnnotations = false;
     bool m_readOnly = false;
+    bool m_caseInsensitive = false;
     std::vector<std::string> m_validExtensions;
     std::vector<RegexPattern> m_validPatterns;
 };
