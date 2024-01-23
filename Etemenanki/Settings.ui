@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>370</width>
-    <height>324</height>
+    <width>642</width>
+    <height>280</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,8 +17,8 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>280</y>
-     <width>351</width>
+     <y>240</y>
+     <width>621</width>
      <height>33</height>
     </rect>
    </property>
@@ -73,7 +73,7 @@
      <x>10</x>
      <y>10</y>
      <width>351</width>
-     <height>261</height>
+     <height>221</height>
     </rect>
    </property>
    <property name="palette">
@@ -228,32 +228,62 @@
      <string>Fill In Missing IDs</string>
     </property>
    </widget>
-   <widget class="QComboBox" name="sorting_combo_box">
-    <property name="geometry">
-     <rect>
-      <x>130</x>
-      <y>230</y>
-      <width>211</width>
-      <height>22</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLabel" name="sorting_label">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>230</y>
-      <width>131</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Output File Sorting</string>
-    </property>
-   </widget>
+  </widget>
+  <widget class="QLabel" name="sorting_label">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>20</y>
+     <width>131</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Output File Sorting</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="sorting_combo_box">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>40</y>
+     <width>261</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="verbose_comments_button">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>110</y>
+     <width>261</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Verbose output file annotations</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="header_comments_button">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>80</y>
+     <width>261</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Output file header annotations</string>
+   </property>
   </widget>
   <zorder>frame</zorder>
   <zorder>layoutWidget</zorder>
+  <zorder>sorting_label</zorder>
+  <zorder>sorting_combo_box</zorder>
+  <zorder>verbose_comments_button</zorder>
+  <zorder>header_comments_button</zorder>
  </widget>
  <resources/>
  <connections>

@@ -21,6 +21,7 @@ public:
 public slots:
     void accept() override;
     void on_comprehensive_button_clicked();
+    void on_sorting_combo_box_currentIndexChanged(int val);
 private:
     Ui::SettingsDialog ui;
     Etemenanki* m_etemenanki;

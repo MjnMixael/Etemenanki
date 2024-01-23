@@ -46,6 +46,14 @@ void XstrProcessor::setSortingType(int val) {
     m_sortingType = val;
 }
 
+void XstrProcessor::setHeadersToggle(bool val) {
+    m_headerAnnotations = val;
+}
+
+void XstrProcessor::setAnnotationsToggle(bool val) {
+    m_verboseAnnotations = val;
+}
+
 void XstrProcessor::setOffset(int val) {
     m_offset = val;
 }
@@ -102,7 +110,7 @@ void XstrProcessor::savePair(const std::string& line, int id) {
     XstrPair newPair;
     newPair.id = id;
     newPair.text = line;
-    newPair.file = m_currentFile;
+    newPair.files.push_back(m_currentFile);
     newPair.discovery_order = ++m_total;
 
     m_xstrList.push_back(newPair);
@@ -123,14 +131,19 @@ void XstrProcessor::writePair(XstrPair* this_pair) {
     }
 }
 
-int XstrProcessor::getNewId() {
-    int newId = m_offset + m_counter++;
+void XstrProcessor::appendLocationToPair(XstrPair* this_pair) {
+    bool new_location = true;
 
-    while (findPair(newId) != nullptr) {
-        newId = m_offset + m_counter++;
+    for (auto location : this_pair->files) {
+        if (location == m_currentFile) {
+            new_location = false;
+            break;
+        }
     }
 
-    return newId;
+    if (new_location) {
+        this_pair->files.push_back(m_currentFile);
+    }
 }
 
 XstrPair* XstrProcessor::findPair(const std::string& text) {
@@ -151,6 +164,16 @@ XstrPair* XstrProcessor::findPair(const int& id) {
     }
 
     return nullptr;
+}
+
+int XstrProcessor::getNewId() {
+    int newId = m_offset + m_counter++;
+
+    while (findPair(newId) != nullptr) {
+        newId = m_offset + m_counter++;
+    }
+
+    return newId;
 }
 
 void XstrProcessor::updateIds() {
@@ -248,6 +271,10 @@ void XstrProcessor::validateXSTR(const std::string& line, int& id) {
                 }
             }
         }
+
+        // If we got to this point then we found a string match and fixed up the IDs. Now we should
+        // maybe save the current location to the pair's files vector
+        appendLocationToPair(thisPair);
     }
 }
 
@@ -300,8 +327,8 @@ bool XstrProcessor::compareById(const XstrPair& a, const XstrPair& b) {
 // Custom comparison function for sorting by file
 bool XstrProcessor::compareByFile(const XstrPair& a, const XstrPair& b) {
     // Convert both strings to lowercase for case-insensitive comparison
-    std::string fileA = a.file;
-    std::string fileB = b.file;
+    std::string fileA = a.files.front();
+    std::string fileB = b.files.front();
     std::transform(fileA.begin(), fileA.end(), fileA.begin(), ::tolower);
     std::transform(fileB.begin(), fileB.end(), fileB.begin(), ::tolower);
 
@@ -313,10 +340,45 @@ bool XstrProcessor::compareByFile(const XstrPair& a, const XstrPair& b) {
 void XstrProcessor::writeOutput() {
     std::string filename = "";
     for (auto pair : m_xstrList) {
-        // Skip printing filename comments in ID order because it would be almost every other line
-        if ((m_sortingType != XSTR_ID_ORDER) && (pair.file != filename)) {
-            filename = pair.file;
+        
+        // Maybe print current file header comments
+        if (m_headerAnnotations && (pair.files.front() != filename)) {
+            filename = pair.files.front();
             m_outputFile << ";;" << filename << std::endl;
+        }
+
+        if (m_verboseAnnotations) {
+            std::string verbose_comment = ";; This string also found in these files: ";
+            bool print_line = true;
+
+            // If we're not printing filename headers then let's be fully inclusive here
+            if (!m_headerAnnotations) {
+                verbose_comment = ";; This string found in these files: ";
+
+                // Print the entire list of files
+                for (auto it = pair.files.begin(); it != pair.files.end(); ++it) {
+                    verbose_comment += *it;
+                    if (std::next(it) != pair.files.end()) {
+                        verbose_comment += ", ";
+                    }
+                }
+            } else {
+                // Otherwise we only need to print if there are additional files to display
+                if (pair.files.size() <= 1) {
+                    print_line = false;
+                } else {
+                    // Print all but the first file because it's in the comment header for this section
+                    for (auto it = std::next(pair.files.begin()); it != pair.files.end(); ++it) {
+                        verbose_comment += *it;
+                        if (std::next(it) != pair.files.end()) {
+                            verbose_comment += ", ";
+                        }
+                    }
+                }
+            }
+            if (print_line) {
+                m_outputFile << verbose_comment << std::endl;
+            }
         }
 
         writePair(&pair);
@@ -368,11 +430,6 @@ void XstrProcessor::processFile(const fs::path& file_path, bool write) {
                     // Save the filename to a global member
                     m_currentFile = file_path.filename().string();
 
-                    // List the filename we found a match in, but only if we're sorting by parsing order
-                    if (write && (m_sortingType == PARSING_ORDER)) {
-                        m_outputFile << ";;" << m_currentFile << std::endl;
-                    }
-
                     // Print to the terminal
                     msg = "Found XSTR matches using pattern \"" + set.pattern_string + "\"";
                     logEntry(msg, false);
@@ -409,11 +466,6 @@ void XstrProcessor::processFile(const fs::path& file_path, bool write) {
 
                 if (write) {
                     replaceLineID(line, currentString, id);
-
-                    // If we're writing in parsing order then we can write the pair to the output file now
-                    if (m_sortingType == PARSING_ORDER) {
-                        writePair(findPair(id));
-                    }
                 } else {
                     validateXSTR(currentString, id);
                 }
@@ -471,6 +523,7 @@ void XstrProcessor::processDirectory(const fs::path& directory_path, bool write)
 }
 
 void XstrProcessor::run() {
+    // Make sure we can write to the log file
     m_logFile.open(m_logFilePath);
     if (!m_logFile.is_open()) {
         logEntry("Error creating log file!");
@@ -479,10 +532,7 @@ void XstrProcessor::run() {
         return;
     }
 
-    std::string fullPath = m_outputFilepath + m_outputFilename;
-
-    m_outputFile.open(fullPath);
-
+    // Make sure we have a valid input directory
     fs::path directoryPath = m_inputFilepath;
     if (!fs::is_directory(directoryPath)) {
         logEntry("Invalid directory path.");
@@ -490,6 +540,10 @@ void XstrProcessor::run() {
         return;
     }
 
+    std::string fullPath = m_outputFilepath + m_outputFilename;
+    m_outputFile.open(fullPath);
+
+    // Make sure we can write to the output file
     if (!m_outputFile.is_open()) {
         logEntry("Error creating output file!");
         m_outputFile.close();
@@ -546,8 +600,6 @@ void XstrProcessor::run() {
     g_continueProcessing = true;
     logEntry("Running!", false);
 
-    m_outputFile << "#default\n" << std::endl;
-
     std::string msg = "";
 
     // Start the scan!
@@ -567,23 +619,28 @@ void XstrProcessor::run() {
         std::this_thread::sleep_for(std::chrono::seconds(5));
 
         processDirectory(directoryPath, true);
-
-        // If we're not sorting by parsing order then we sort and write the entire output file here
-        if (m_sortingType != PARSING_ORDER) {
-            switch (m_sortingType) {
-                case XSTR_ID_ORDER:
-                    std::sort(m_xstrList.begin(), m_xstrList.end(), compareById);
-                    break;
-                case FILENAME_ORDER:
-                    std::sort(m_xstrList.begin(), m_xstrList.end(), compareByFile);
-                    break;
-                default: // Just in case something goes wrong, we'll use discovery/default order
-                    std::sort(m_xstrList.begin(), m_xstrList.end(), compareByDiscovery);
-            }
-
-            writeOutput();
-        }
     }
+
+    switch (m_sortingType) {
+        case PARSING_ORDER:
+            std::sort(m_xstrList.begin(), m_xstrList.end(), compareByDiscovery);
+            break;
+        case XSTR_ID_ORDER:
+            std::sort(m_xstrList.begin(), m_xstrList.end(), compareById);
+            break;
+        case FILENAME_ORDER:
+            std::sort(m_xstrList.begin(), m_xstrList.end(), compareByFile);
+            break;
+        default:
+            // If we end up here then we just don't do any sorting and print in whatever
+            // order the vector is already in.
+            break;
+    }
+
+    // Now actually write the output file
+    m_outputFile << "#default\n" << std::endl;
+
+    writeOutput();
 
     m_outputFile << "\n#end" << std::endl;
     m_outputFile.close();

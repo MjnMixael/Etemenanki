@@ -35,6 +35,10 @@ public:
     bool getFillInIds();
     void setSortingType(int val);
     int getSortingType();
+    void setHeaderAnnotations(bool val);
+    bool getHeaderAnnotations();
+    void setVerboseAnnotations(bool val);
+    bool getVerboseAnnotations();
     void toggleOffsetControl(bool val);
 
 public slots:
@@ -104,6 +108,8 @@ private:
     bool m_comprehensiveScan = false;
     bool m_fillInIds = false;
     int m_sortingType = PARSING_ORDER;
+    bool m_headerAnnotations = true;
+    bool m_verboseAnnotations = false;
     QStringList m_defaultExtensions = { ".tbl", ".tbm", ".fs2", ".fc2" };
     QJsonObject m_defaultRegex() {
         QJsonObject obj;

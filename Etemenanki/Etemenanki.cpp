@@ -110,6 +110,20 @@ int Etemenanki::getSortingType() {
     return m_sortingType;
 }
 
+void Etemenanki::setHeaderAnnotations(bool val) {
+    m_headerAnnotations = val;
+}
+bool Etemenanki::getHeaderAnnotations() {
+    return m_headerAnnotations;
+}
+
+void Etemenanki::setVerboseAnnotations(bool val) {
+    m_verboseAnnotations = val;
+}
+bool Etemenanki::getVerboseAnnotations() {
+    return m_verboseAnnotations;
+}
+
 void Etemenanki::toggleOffsetControl(bool val) {
     ui.offset_line_edit->setEnabled(val);
 }
@@ -343,6 +357,8 @@ void Etemenanki::on_begin_button_clicked() {
     m_xstrProcessor->setComprehensiveScan(m_comprehensiveScan);
     m_xstrProcessor->setFillEmptyIds(m_fillInIds);
     m_xstrProcessor->setSortingType(m_sortingType);
+    m_xstrProcessor->setHeadersToggle(m_headerAnnotations);
+    m_xstrProcessor->setAnnotationsToggle(m_verboseAnnotations);
 
     for (int i = 0; i < ui.files_list_widget->count(); ++i) {
         std::string ext = ui.files_list_widget->item(i)->text().toStdString();
@@ -436,6 +452,8 @@ void Etemenanki::loadSettings() {
     m_comprehensiveScan = settings.value("comprehensive").toBool(m_comprehensiveScan);
     m_fillInIds = settings.value("fillInIds").toBool(m_fillInIds);
     m_sortingType = settings.value("sortingType").toInt(m_sortingType);
+    m_headerAnnotations = settings.value("headerAnnotations").toBool(m_headerAnnotations);
+    m_verboseAnnotations = settings.value("verboseAnnotations").toBool(m_verboseAnnotations);
 
     ui.files_list_widget->clear(); // Clear existing items before loading
     QJsonArray extensionsArray;
@@ -484,6 +502,8 @@ void Etemenanki::saveSettings() {
     settings["comprehensive"] = m_comprehensiveScan;
     settings["fillInIds"] = m_fillInIds;
     settings["sortingType"] = m_sortingType;
+    settings["headerAnnotations"] = m_headerAnnotations;
+    settings["verboseAnnotations"] = m_verboseAnnotations;
 
     QJsonArray extensionsArray;
     for (int i = 0; i < ui.files_list_widget->count(); ++i) {

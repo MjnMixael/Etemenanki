@@ -26,23 +26,26 @@ SettingsDialog::SettingsDialog(Etemenanki* m_etemenanki, QWidget* parent) : QDia
         ui.fill_in_ids_button->setEnabled(m_etemenanki->getComprehensive());
         ui.fill_in_ids_button->setChecked(m_etemenanki->getFillInIds());
 
-        ui.sorting_combo_box->setEnabled(m_etemenanki->getComprehensive());
         ui.sorting_combo_box->setCurrentIndex(m_etemenanki->getSortingType());
+
+        ui.header_comments_button->setChecked(m_etemenanki->getHeaderAnnotations());
+        ui.verbose_comments_button->setChecked(m_etemenanki->getVerboseAnnotations());
     }
 }
 
 void SettingsDialog::accept() {
     if (m_etemenanki) {
         m_etemenanki->setComprehensive(ui.comprehensive_button->isChecked());
+        m_etemenanki->setSortingType(ui.sorting_combo_box->currentIndex());
+        m_etemenanki->setHeaderAnnotations(ui.header_comments_button->isChecked());
+        m_etemenanki->setVerboseAnnotations(ui.verbose_comments_button->isChecked());
 
         if (ui.comprehensive_button->isChecked()) {
             m_etemenanki->setFillInIds(ui.fill_in_ids_button->isChecked());
             m_etemenanki->toggleOffsetControl(!ui.fill_in_ids_button->isChecked());
-            m_etemenanki->setSortingType(ui.sorting_combo_box->currentIndex());
         } else {
             m_etemenanki->setFillInIds(false);
             m_etemenanki->toggleOffsetControl(true);
-            m_etemenanki->setSortingType(PARSING_ORDER);
         }
     }
 
@@ -51,8 +54,14 @@ void SettingsDialog::accept() {
 
 void SettingsDialog::on_comprehensive_button_clicked() {
     ui.fill_in_ids_button->setEnabled(ui.comprehensive_button->isChecked());
-    ui.sorting_combo_box->setEnabled(ui.comprehensive_button->isChecked());
-    if (!ui.sorting_combo_box->isEnabled()) {
-        ui.sorting_combo_box->setCurrentIndex(PARSING_ORDER);
+}
+
+void SettingsDialog::on_sorting_combo_box_currentIndexChanged(int val) {
+    if (val == XSTR_ID_ORDER) {
+        ui.header_comments_button->setChecked(false);
+        ui.header_comments_button->setEnabled(false);
+    } else {
+        ui.header_comments_button->setEnabled(true);
+        ui.header_comments_button->setChecked(true);
     }
 }
