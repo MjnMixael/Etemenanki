@@ -103,6 +103,13 @@ bool Etemenanki::getFillInIds() {
     return m_fillInIds;
 }
 
+void Etemenanki::setSortingType(int val) {
+    m_sortingType = val;
+}
+int Etemenanki::getSortingType() {
+    return m_sortingType;
+}
+
 void Etemenanki::toggleOffsetControl(bool val) {
     ui.offset_line_edit->setEnabled(val);
 }
@@ -335,6 +342,7 @@ void Etemenanki::on_begin_button_clicked() {
     m_xstrProcessor->setReplaceExisting(replace);
     m_xstrProcessor->setComprehensiveScan(m_comprehensiveScan);
     m_xstrProcessor->setFillEmptyIds(m_fillInIds);
+    m_xstrProcessor->setSortingType(m_sortingType);
 
     for (int i = 0; i < ui.files_list_widget->count(); ++i) {
         std::string ext = ui.files_list_widget->item(i)->text().toStdString();
@@ -427,6 +435,7 @@ void Etemenanki::loadSettings() {
     ui.replace_radio_button->setChecked(settings.value("replaceValues").toBool(m_defaultReplacement));
     m_comprehensiveScan = settings.value("comprehensive").toBool(m_comprehensiveScan);
     m_fillInIds = settings.value("fillInIds").toBool(m_fillInIds);
+    m_sortingType = settings.value("sortingType").toInt(m_sortingType);
 
     ui.files_list_widget->clear(); // Clear existing items before loading
     QJsonArray extensionsArray;
@@ -474,6 +483,7 @@ void Etemenanki::saveSettings() {
     settings["replaceValues"] = ui.replace_radio_button->isChecked();
     settings["comprehensive"] = m_comprehensiveScan;
     settings["fillInIds"] = m_fillInIds;
+    settings["sortingType"] = m_sortingType;
 
     QJsonArray extensionsArray;
     for (int i = 0; i < ui.files_list_widget->count(); ++i) {

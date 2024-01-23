@@ -33,6 +33,8 @@ public:
     bool getComprehensive();
     void setFillInIds(bool val);
     bool getFillInIds();
+    void setSortingType(int val);
+    int getSortingType();
     void toggleOffsetControl(bool val);
 
 public slots:
@@ -101,6 +103,7 @@ private:
     bool m_defaultReplacement = false;
     bool m_comprehensiveScan = false;
     bool m_fillInIds = false;
+    int m_sortingType = PARSING_ORDER;
     QStringList m_defaultExtensions = { ".tbl", ".tbm", ".fs2", ".fc2" };
     QJsonObject m_defaultRegex() {
         QJsonObject obj;

@@ -15,6 +15,7 @@
 #include <set>
 #include <thread>
 #include <chrono>
+#include <algorithm>
 
 #include <QThread>
 #include <QObject>
@@ -29,8 +30,21 @@ struct XstrPair {
     std::string text;
     bool printed;
     std::string file;
+    int discovery_order;
 
-    XstrPair() : id(-1), text(""), printed(false), file("") {}
+    // Stretch goal.. make file an array of files. If file size > 1 then print a comment listing all the files
+    // This particular pair was found in
+    XstrPair() : id(-1), text(""), printed(false), file(""), discovery_order(-1) {}
+};
+
+// If an enum is added here then you must also add code to
+// handle it properly in settings.cpp!
+enum OutputSortTypes : int {
+    PARSING_ORDER,
+    XSTR_ID_ORDER,
+    FILENAME_ORDER,
+
+    Next_available_order
 };
 
 class XstrProcessor : public QObject {
@@ -47,6 +61,7 @@ public:
     void setReplaceExisting(bool val);
     void setComprehensiveScan(bool val);
     void setFillEmptyIds(bool val);
+    void setSortingType(int val);
     void setOffset(int val);
     void setLogFilePath(QString path);
 
@@ -76,6 +91,7 @@ private:
     void processFile(const fs::path& file_path, bool write);
     void logEntry(const std::string& text, bool update_terminal = true);
     void updateIds();
+    void writeOutput();
 
     // Takes the line from the file and replaces the ID with the new one
     std::string replacePattern(const std::string& input, const std::string& current_string, const int& current_id);
@@ -91,7 +107,7 @@ private:
     void savePair(const std::string& line, int id);
 
     // Write a pair to the output file, usually tstrings.tbl
-    void writePair(const std::string& line, const int& id);
+    void writePair(XstrPair* this_pair);
 
     // Get a new unique xstr id
     int getNewId();
@@ -100,9 +116,15 @@ private:
     XstrPair* findPair(const std::string& text);
     XstrPair* findPair(const int& id);
 
+    // Sorting methods
+    static bool compareByDiscovery(const XstrPair& a, const XstrPair& b);
+    static bool compareById(const XstrPair& a, const XstrPair& b);
+    static bool compareByFile(const XstrPair& a, const XstrPair& b);
+
     // Internal variable members
     std::vector<XstrPair> m_xstrList;
     int m_counter = 0;
+    int m_total = 0;
     std::ofstream m_outputFile;
     std::string m_logFilePath;
     std::ofstream m_logFile;
@@ -125,6 +147,7 @@ private:
     bool m_replaceExisting = false;
     bool m_comprehensiveScan = false;
     bool m_fillEmptyIds = false;
+    int m_sortingType = PARSING_ORDER;
     std::vector<std::string> m_validExtensions;
     std::vector<RegexPattern> m_validPatterns;
 };
