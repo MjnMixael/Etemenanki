@@ -31,10 +31,11 @@ struct XstrPair {
     bool printed;
     std::vector<std::string> files;
     int discovery_order;
+    bool invalid;
 
     // Stretch goal.. make file an array of files. If file size > 1 then print a comment listing all the files
     // This particular pair was found in
-    XstrPair() : id(-1), text(""), printed(false), files(), discovery_order(-1) {}
+    XstrPair() : id(-1), text(""), printed(false), files(), discovery_order(-1), invalid(false) {}
 };
 
 // If an enum is added here then you must also add code to
@@ -64,6 +65,7 @@ public:
     void setSortingType(int val);
     void setHeadersToggle(bool val);
     void setAnnotationsToggle(bool val);
+    void setReadOnlyToggle(bool val);
     void setOffset(int val);
     void setLogFilePath(QString path);
 
@@ -106,7 +108,7 @@ private:
     void validateXSTR(const std::string& line, int& id);
 
     // Saves a pair to the m_xstrList vector
-    void savePair(const std::string& line, int id);
+    void savePair(const std::string& line, int id, bool invalid = false);
 
     // Write a pair to the output file, usually tstrings.tbl
     void writePair(XstrPair* this_pair);
@@ -155,6 +157,7 @@ private:
     int m_sortingType = PARSING_ORDER;
     bool m_headerAnnotations = true;
     bool m_verboseAnnotations = false;
+    bool m_readOnly = false;
     std::vector<std::string> m_validExtensions;
     std::vector<RegexPattern> m_validPatterns;
 };

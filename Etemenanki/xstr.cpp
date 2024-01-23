@@ -54,6 +54,10 @@ void XstrProcessor::setAnnotationsToggle(bool val) {
     m_verboseAnnotations = val;
 }
 
+void XstrProcessor::setReadOnlyToggle(bool val) {
+    m_readOnly = val;
+}
+
 void XstrProcessor::setOffset(int val) {
     m_offset = val;
 }
@@ -101,7 +105,7 @@ void XstrProcessor::logEntry(const std::string& text, bool update_terminal) {
     }
 }
 
-void XstrProcessor::savePair(const std::string& line, int id) {
+void XstrProcessor::savePair(const std::string& line, int id, bool invalid) {
     // A quick verification that -1 is the only invalid ID stored
     if (id < 0) {
         id = -1;
@@ -112,6 +116,7 @@ void XstrProcessor::savePair(const std::string& line, int id) {
     newPair.text = line;
     newPair.files.push_back(m_currentFile);
     newPair.discovery_order = ++m_total;
+    newPair.invalid = invalid;
 
     m_xstrList.push_back(newPair);
 }
@@ -229,44 +234,58 @@ void XstrProcessor::validateXSTR(const std::string& line, int& id) {
         if (thisPair == nullptr) {
             // This pair is valid and brand new, but we should verify it's ID is valid first
             // However, if this is a comprehensive scan then we just save the -1 and adjust later
-            if (!m_comprehensiveScan && (id < 0)) {
+            if (!m_readOnly && !m_comprehensiveScan && (id < 0)) {
                 id = getNewId();
             }
             savePair(line, id);
         } else {
+            bool invalid = false;
             // The ID matches, but the strings didn't so this is an invalid ID. Time to get a new one
             // However if this is a comprehensive scan then we just save as -1 because it'll get adjusted later
-            if (!m_comprehensiveScan) {
+            if (!m_readOnly && !m_comprehensiveScan) {
                 id = getNewId();
             } else {
-                id = -1;
+                if (m_comprehensiveScan) {
+                    id = -1;
+                }
+                // If we're in read only mode then we keep the ID exactly as is and flag it as invalid
+                if (m_readOnly) {
+                    invalid = true;
+                }
             }
-            savePair(line, id);
+            savePair(line, id, invalid);
         }
     } else {
         // The string matches, does the ID?
         if (thisPair->id == id) {
             // It does, but is it a valid id?
             // However in a comprehensive scan we can just keep it as -1 because it'll get adjusted later
-            if (!m_comprehensiveScan && (id < 0)) {
+            if (!m_readOnly && !m_comprehensiveScan && (id < 0)) {
                 // ID is not valid, so we need a new one and update both
                 id = getNewId();
                 thisPair->id = id;
             }
+        // The string matches, but the IDs do not...
         } else {
-            // It does not, so we need to fix the ID so it matches. Prefer the stored one if it's valid
-            if (thisPair->id >= 0) {
-                id = thisPair->id;
+            // In read only let's mark this as invalid and move on
+            if (m_readOnly) {
+                thisPair->invalid = true;
+            // Otherwise let's try and fix it up
             } else {
-                // The stored ID was invalid so now we should prefer the current one as long as it's valid
-                if (id >= 0) {
-                    thisPair->id = id;
+                // We need to fix the ID so it matches. Prefer the stored one if it's valid
+                if (thisPair->id >= 0) {
+                    id = thisPair->id;
                 } else {
-                    // Neither was valid so now we need a new ID and to update both
-                    // However in a comprehensive scan we can just keep it as -1 because it'll get adjusted later
-                    if (!m_comprehensiveScan) {
-                        id = getNewId();
+                    // The stored ID was invalid so now we should prefer the current one as long as it's valid
+                    if (id >= 0) {
                         thisPair->id = id;
+                    } else {
+                        // Neither was valid so now we need a new ID and to update both
+                        // However in a comprehensive scan we can just keep it as -1 because it'll get adjusted later
+                        if (!m_comprehensiveScan) {
+                            id = getNewId();
+                            thisPair->id = id;
+                        }
                     }
                 }
             }
@@ -379,6 +398,12 @@ void XstrProcessor::writeOutput() {
             if (print_line) {
                 m_outputFile << verbose_comment << std::endl;
             }
+        }
+        
+        // In read only mode we don't do any ID verification but we can still print possible errors to look at
+        if (m_readOnly && pair.invalid && (pair.id >= 0)) {
+            std::string warning = ";;-------------------This string has a possible conflict with another string or ID!-------------------";
+            m_outputFile << warning << std::endl;
         }
 
         writePair(&pair);
@@ -558,6 +583,14 @@ void XstrProcessor::run() {
     std::string thisFile = "Output File: " + fullPath;
     logEntry(thisFile, false);
 
+    if (m_headerAnnotations) {
+        logEntry("Got command to write header filename annotations...", false);
+    }
+
+    if (m_verboseAnnotations) {
+        logEntry("Got command to write verbose annoations...", false);
+    }
+
     if (m_comprehensiveScan) {
         logEntry("Doing comprehensive scan!", false);
     }
@@ -573,6 +606,10 @@ void XstrProcessor::run() {
 
     std::string thisOffset = "Starting new XSTR IDs at " + m_offset;
     logEntry(thisOffset, false);
+
+    if (m_readOnly) {
+        logEntry("Running in Read Only mode! No input files will be edited...", false);
+    }
     
     logEntry("List of extensions:", false);
     for (auto ext : m_validExtensions) {
@@ -602,12 +639,14 @@ void XstrProcessor::run() {
 
     std::string msg = "";
 
+    bool write_files = (!m_readOnly && !m_comprehensiveScan);
+
     // Start the scan!
-    processDirectory(directoryPath, !m_comprehensiveScan);
+    processDirectory(directoryPath, write_files);
 
     // If we're doing Comprehensive then we need to go again
     // but this time we'll actually write the files
-    if (g_continueProcessing && m_comprehensiveScan) {
+    if (g_continueProcessing && !m_readOnly && m_comprehensiveScan) {
         // Write a message to the log and give the user a chance to cancel
         logEntry("Finished reading files! Processing...");
         std::this_thread::sleep_for(std::chrono::seconds(5));

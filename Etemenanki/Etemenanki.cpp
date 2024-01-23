@@ -44,6 +44,9 @@ Etemenanki::Etemenanki(QWidget *parent)
     // Maybe disable offset
     toggleOffsetControl(!m_fillInIds);
 
+    // Set the read only checkbox
+    ui.read_only_checkbox->setChecked(m_readOnly);
+
     //Create the processor thread
     m_xstrProcessor = new XstrProcessor(this);
     connect(m_xstrProcessor, &XstrProcessor::update_terminal_text, this, &Etemenanki::update_terminal_output);
@@ -314,6 +317,10 @@ bool Etemenanki::isRowChecked(int row) {
     return false;
 }
 
+void Etemenanki::on_read_only_checkbox_clicked() {
+    m_readOnly = ui.read_only_checkbox->isChecked();
+}
+
 void Etemenanki::on_begin_button_clicked() {
     if (m_xstrProcessor->isRunning()) {
         ui.begin_button->setEnabled(false); // Prevent double clicks
@@ -359,6 +366,7 @@ void Etemenanki::on_begin_button_clicked() {
     m_xstrProcessor->setSortingType(m_sortingType);
     m_xstrProcessor->setHeadersToggle(m_headerAnnotations);
     m_xstrProcessor->setAnnotationsToggle(m_verboseAnnotations);
+    m_xstrProcessor->setReadOnlyToggle(m_readOnly);
 
     for (int i = 0; i < ui.files_list_widget->count(); ++i) {
         std::string ext = ui.files_list_widget->item(i)->text().toStdString();
@@ -428,6 +436,7 @@ void Etemenanki::toggleControls(bool val) {
     ui.output_directory_line_edit->setEnabled(val);
     ui.output_file_line_edit->setEnabled(val);
     ui.actionPreferences->setEnabled(val);
+    ui.read_only_checkbox->setEnabled(val);
 }
 
 void Etemenanki::update_terminal_output(const QString& text) {
@@ -454,6 +463,7 @@ void Etemenanki::loadSettings() {
     m_sortingType = settings.value("sortingType").toInt(m_sortingType);
     m_headerAnnotations = settings.value("headerAnnotations").toBool(m_headerAnnotations);
     m_verboseAnnotations = settings.value("verboseAnnotations").toBool(m_verboseAnnotations);
+    m_readOnly = settings.value("readOnlyMode").toBool(m_readOnly);
 
     ui.files_list_widget->clear(); // Clear existing items before loading
     QJsonArray extensionsArray;
@@ -504,6 +514,7 @@ void Etemenanki::saveSettings() {
     settings["sortingType"] = m_sortingType;
     settings["headerAnnotations"] = m_headerAnnotations;
     settings["verboseAnnotations"] = m_verboseAnnotations;
+    settings["readOnlyMode"] = m_readOnly;
 
     QJsonArray extensionsArray;
     for (int i = 0; i < ui.files_list_widget->count(); ++i) {

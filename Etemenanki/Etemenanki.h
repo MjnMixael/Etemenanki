@@ -54,6 +54,9 @@ public slots:
     void on_regex_remove_button_clicked();
     void on_regex_table_widget_clicked();
 
+    // Read only widget
+    void on_read_only_checkbox_clicked();
+
     // Begin button
     void on_begin_button_clicked();
 
@@ -110,6 +113,7 @@ private:
     int m_sortingType = PARSING_ORDER;
     bool m_headerAnnotations = true;
     bool m_verboseAnnotations = false;
+    bool m_readOnly = false;
     QStringList m_defaultExtensions = { ".tbl", ".tbm", ".fs2", ".fc2" };
     QJsonObject m_defaultRegex() {
         QJsonObject obj;
