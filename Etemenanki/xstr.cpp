@@ -77,11 +77,13 @@ int XstrProcessor::getNumRegexPatterns() {
 void XstrProcessor::clearVectors() {
     m_validExtensions.clear();
     m_validPatterns.clear();
+    m_ignoredItems.clear();
 }
 
 void XstrProcessor::addFileExtension(std::string ext) {
     m_validExtensions.push_back(ext);
 }
+
 void XstrProcessor::addRegexPattern(std::string pattern, int string_pos, int id_pos, int idx) {
     std::regex reg;
     try {
@@ -93,6 +95,19 @@ void XstrProcessor::addRegexPattern(std::string pattern, int string_pos, int id_
     }
     RegexPattern thisPattern = { reg, string_pos, id_pos, idx, pattern };
     m_validPatterns.push_back(thisPattern);
+}
+
+void XstrProcessor::addIgnoredItem(std::string path) {
+    fs::path filepath;
+    try {
+        filepath = fs::canonical(path).string();
+    }
+    catch (const fs::filesystem_error& e) {
+        std::string msg = "String '" + path + "' is not a valid path. Ignoring!";
+        logEntry(msg, false);
+        return;
+    }
+    m_ignoredItems.push_back(filepath);
 }
 
 void XstrProcessor::setTerminalText(const std::string &text) {
@@ -437,13 +452,6 @@ void XstrProcessor::processFile(const fs::path& file_path, bool write) {
         return;
     }
 
-    // Skip the file if it is our output file
-    std::string thisPath = file_path.string();
-    std::string outputPath = m_outputFilepath + m_outputFilename;
-    if (thisPath == outputPath) {
-        return;
-    }
-
     std::ifstream inputFile(file_path);
     if (!inputFile.is_open()) {
         std::string msg = "Error opening file: " + file_path.string();
@@ -552,13 +560,39 @@ bool XstrProcessor::isExtensionValid(const std::string& extension) {
     return false;
 }
 
+bool XstrProcessor::isPathIgnored(const std::filesystem::directory_entry& entry) {
+    fs::path entryPath = entry.path();
+
+    // Check if entry is a directory
+    if (entryPath.has_extension()) {
+        // It's a file, check if it or its parent directory is in the ignore list
+        for (const auto& path : m_ignoredItems) {
+            if (entryPath == path || entryPath.parent_path() == path) {
+                logEntry("Ignoring path: " + entryPath.string(), false);
+                return true;
+            }
+        }
+    } else {
+        // It's a directory, check if it's in the ignore list
+        for (const auto& path : m_ignoredItems) {
+            if (entryPath == path) {
+                logEntry("Ignoring path: " + entryPath.string(), false);
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 void XstrProcessor::processDirectory(const fs::path& directory_path, bool write) {
     setTerminalText(m_inputFilepath);
     for (const auto& entry : fs::recursive_directory_iterator(directory_path)) {
         if (!g_continueProcessing) {
             return;
         }
-        if (entry.is_regular_file()) {
+        
+        if (!isPathIgnored(entry) && entry.is_regular_file()) {
             // Check if the file has the required extension
             std::string extension = entry.path().extension().string();
             if (isExtensionValid(extension)) {
@@ -652,6 +686,10 @@ void XstrProcessor::run() {
     if (m_replaceExisting) {
         m_comprehensiveScan = false;
     }
+
+    // Add our output file to the ignore list
+    std::string outputPath = m_outputFilepath + m_outputFilename;
+    addIgnoredItem(outputPath);
 
     m_xstrList.clear();
 

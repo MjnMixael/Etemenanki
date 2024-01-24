@@ -74,6 +74,7 @@ public:
     void clearVectors();
     void addFileExtension(std::string ext);
     void addRegexPattern(std::string pattern, int string_pos, int id_pos, int idx);
+    void addIgnoredItem(std::string path);
     
     // Methods to get runtime information
     int getNumFileExtensions();
@@ -93,6 +94,7 @@ private:
     // Top level methods
     void processDirectory(const fs::path& directory_path, bool write);
     bool isExtensionValid(const std::string& extension);
+    bool isPathIgnored(const std::filesystem::directory_entry& entry);
     void processFile(const fs::path& file_path, bool write);
     void logEntry(const std::string& text, bool update_terminal = true);
     void updateIds();
@@ -165,4 +167,5 @@ private:
     bool m_caseInsensitive = false;
     std::vector<std::string> m_validExtensions;
     std::vector<RegexPattern> m_validPatterns;
+    std::vector<fs::path> m_ignoredItems;
 };

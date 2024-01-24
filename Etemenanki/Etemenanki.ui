@@ -752,7 +752,7 @@ Make sure your directory path is correct!</string>
      <x>0</x>
      <y>0</y>
      <width>890</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -760,6 +760,8 @@ Make sure your directory path is correct!</string>
      <string>File</string>
     </property>
     <addaction name="actionPreferences"/>
+    <addaction name="actionIgnore_Files"/>
+    <addaction name="separator"/>
     <addaction name="actionSave_Settings"/>
     <addaction name="actionExit"/>
    </widget>
@@ -805,6 +807,11 @@ Make sure your directory path is correct!</string>
   <action name="actionPreferences">
    <property name="text">
     <string>Preferences</string>
+   </property>
+  </action>
+  <action name="actionIgnore_Files">
+   <property name="text">
+    <string>Ignore Files</string>
    </property>
   </action>
  </widget>
@@ -877,10 +884,27 @@ Make sure your directory path is correct!</string>
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionIgnore_Files</sender>
+   <signal>triggered()</signal>
+   <receiver>EtemenankiClass</receiver>
+   <slot>ui_open_ignore()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>444</x>
+     <y>211</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>ui_save_settings()</slot>
   <slot>ui_open_documentation()</slot>
   <slot>ui_open_preferences()</slot>
+  <slot>ui_open_ignore()</slot>
  </slots>
 </ui>

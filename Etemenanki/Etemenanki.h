@@ -19,6 +19,7 @@
 
 #include "ui_Etemenanki.h"
 #include "Settings.h"
+#include "Ignore.h"
 #include "xstr.h"
 
 class Etemenanki : public QMainWindow
@@ -42,6 +43,12 @@ public:
     void setCaseInsensitive(bool val);
     bool getCaseInsensitive();
     void toggleOffsetControl(bool val);
+
+    // Check if an item exists in a widget
+    static bool itemExists(QListWidget* listWidget, const QString& textToCheck);
+    static bool itemExists(QTableWidget* tableWidget, const QString& textToCheck);
+
+    QVector<QString> m_ignoredList;
 
 public slots:
     // File extensions widget
@@ -72,6 +79,7 @@ public slots:
     void ui_save_settings();
     void ui_open_documentation();
     void ui_open_preferences();
+    void ui_open_ignore();
 
 protected:
     void closeEvent(QCloseEvent* event) override;

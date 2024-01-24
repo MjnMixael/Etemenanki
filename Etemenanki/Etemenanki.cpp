@@ -71,6 +71,11 @@ void Etemenanki::ui_open_preferences() {
     dialog.exec();
 }
 
+void Etemenanki::ui_open_ignore() {
+    IgnoreDialog dialog(this, this);
+    dialog.exec();
+}
+
 void Etemenanki::closeEvent(QCloseEvent* event) {
     if (m_xstrProcessor->isRunning()) {
         g_continueProcessing = false;
@@ -138,7 +143,7 @@ void Etemenanki::toggleOffsetControl(bool val) {
     ui.offset_line_edit->setEnabled(val);
 }
 
-bool itemExists(QListWidget* listWidget, const QString& textToCheck) {
+bool Etemenanki::itemExists(QListWidget* listWidget, const QString& textToCheck) {
     for (int i = 0; i < listWidget->count(); ++i) {
         QListWidgetItem* item = listWidget->item(i);
         if (item && item->text() == textToCheck) {
@@ -148,6 +153,12 @@ bool itemExists(QListWidget* listWidget, const QString& textToCheck) {
     return false;  // Item does not exist
 }
 
+bool Etemenanki::itemExists(QTableWidget* tableWidget, const QString& textToCheck) {
+    QList<QTableWidgetItem*> items = tableWidget->findItems(textToCheck, Qt::MatchExactly);
+
+    return !items.isEmpty();  // If items list is not empty, the item exists
+}
+
 void Etemenanki::addFileExtension(QString ext) {
     if (ext.at(0) != ".") {
         ext.prepend(".");
@@ -155,6 +166,8 @@ void Etemenanki::addFileExtension(QString ext) {
 
     if (!itemExists(ui.files_list_widget, ext)) {
         ui.files_list_widget->addItem(ext);
+        ui.files_line_edit->clear();
+        update_terminal_output("New file extension added!");
     }
 }
 
@@ -162,9 +175,6 @@ void Etemenanki::on_files_add_button_clicked() {
     QString ext = ui.files_line_edit->text();
 
     addFileExtension(ext);
-
-    ui.files_line_edit->clear();
-    update_terminal_output("New file extension added!");
 }
 
 void Etemenanki::on_files_update_button_clicked() {
@@ -199,12 +209,6 @@ void Etemenanki::on_files_list_widget_clicked() {
     ui.files_line_edit->setText(ui.files_list_widget->item(i)->text());
     ui.files_update_button->setEnabled(true);
     ui.files_remove_button->setEnabled(true);
-}
-
-bool itemExists(QTableWidget* tableWidget, const QString& textToCheck) {
-    QList<QTableWidgetItem*> items = tableWidget->findItems(textToCheck, Qt::MatchExactly);
-
-    return !items.isEmpty();  // If items list is not empty, the item exists
 }
 
 bool Etemenanki::addRegexRow(QString pattern, QString string_pos, QString id_pos, bool checked, int row) {
@@ -394,6 +398,11 @@ void Etemenanki::on_begin_button_clicked() {
         }
     }
 
+    for (int i = 0; i < m_ignoredList.size(); i++) {
+        std::string path = m_ignoredList[i].toStdString();
+        m_xstrProcessor->addIgnoredItem(path);
+    }
+
     saveSettings();
 
     if (m_xstrProcessor->getNumFileExtensions() <= 0) {
@@ -445,6 +454,7 @@ void Etemenanki::toggleControls(bool val) {
     ui.output_file_line_edit->setEnabled(val);
     ui.actionPreferences->setEnabled(val);
     ui.read_only_checkbox->setEnabled(val);
+    ui.actionIgnore_Files->setEnabled(val);
 }
 
 void Etemenanki::update_terminal_output(const QString& text) {
@@ -478,8 +488,7 @@ void Etemenanki::loadSettings() {
     QJsonArray extensionsArray;
     if (settings.contains("file_extensions")) {
         extensionsArray = settings["file_extensions"].toArray();
-    }
-    else {
+    } else {
         for (const QString& ext : m_defaultExtensions) {
             extensionsArray.append(ext);
         }
@@ -489,17 +498,29 @@ void Etemenanki::loadSettings() {
         addFileExtension(value.toString());
     }
 
+    ui.regex_table_widget->clear();
     QJsonArray regexArray;
     if (settings.contains("regex_rules")) {
         regexArray = settings["regex_rules"].toArray();
-    }
-    else {
+    } else {
         regexArray.append(m_defaultRegex());
     }
 
-    foreach(const QJsonValue & value, regexArray) {
+    foreach (const QJsonValue& value, regexArray) {
         QJsonObject regexItem = value.toObject();
         addRegexRow(regexItem["regex_string"].toString(), QString::number(regexItem["string_position"].toInt()), QString::number(regexItem["id_position"].toInt()), regexItem["checked"].toBool());
+    }
+
+    m_ignoredList.clear();
+    QJsonArray ignoredArray;
+    if (settings.contains("ignored_list")) {
+        ignoredArray = settings["ignored_list"].toArray();
+    } else {
+        ignoredArray = {};
+    }
+
+    for (const QJsonValue& value : ignoredArray) {
+        m_ignoredList.push_back(value.toString());
     }
 
     file.close();
@@ -542,6 +563,12 @@ void Etemenanki::saveSettings() {
         regexArray.append(regexItem);
     }
     settings["regex_rules"] = regexArray;
+
+    QJsonArray ignoredArray;
+    for (int i = 0; i < m_ignoredList.size(); i++) {
+        ignoredArray.append(m_ignoredList[i]);
+    }
+    settings["ignored_list"] = ignoredArray;
 
     QJsonDocument doc(settings);
     file.write(doc.toJson());
