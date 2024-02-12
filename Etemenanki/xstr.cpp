@@ -394,6 +394,10 @@ bool XstrProcessor::compareByFile(const XstrPair& a, const XstrPair& b) {
 
 // Write the entire xstrList at once, assuming they are already in the correct order
 void XstrProcessor::writeOutput() {
+    if (!g_continueProcessing) {
+        return;
+    }
+
     std::string filename = "";
     for (auto pair : m_xstrList) {
         
@@ -745,6 +749,11 @@ void XstrProcessor::run() {
     m_outputFile.close();
 
     msg = "Processing completed. Output saved to " + m_outputFilename;
+
+    if (!g_continueProcessing) {
+        msg = "Processing aborted..";
+    }
+
     logEntry(msg);
     m_logFile.close();
 

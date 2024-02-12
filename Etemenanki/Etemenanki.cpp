@@ -336,6 +336,7 @@ void Etemenanki::on_begin_button_clicked() {
     if (m_xstrProcessor->isRunning()) {
         ui.begin_button->setEnabled(false); // Prevent double clicks
         g_continueProcessing = false;
+        update_terminal_output("Terminate requested! Please wait...");
         return;
     }
 
