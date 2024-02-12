@@ -25,6 +25,15 @@ namespace fs = std::filesystem;
 
 extern bool g_continueProcessing;
 
+// Struct for storing regex patterns and associated information
+struct RegexPattern {
+    std::regex pattern;
+    int string_position;
+    int id_position;
+    int idx;
+    std::string pattern_string;
+};
+
 struct XstrPair {
     int id;
     std::string text;
@@ -32,10 +41,11 @@ struct XstrPair {
     std::vector<std::string> files;
     int discovery_order;
     bool invalid;
+    const RegexPattern* pattern;
 
     // Stretch goal.. make file an array of files. If file size > 1 then print a comment listing all the files
     // This particular pair was found in
-    XstrPair() : id(-1), text(""), printed(false), files(), discovery_order(-1), invalid(false) {}
+    XstrPair() : id(-1), text(""), printed(false), files(), discovery_order(-1), invalid(false), pattern(nullptr) {}
 };
 
 // If an enum is added here then you must also add code to
@@ -101,17 +111,17 @@ private:
     void writeOutput();
 
     // Takes the line from the file and replaces the ID with the new one
-    std::string replacePattern(const std::string& input, const std::string& current_string, const int& current_id);
+    std::string replacePattern(const RegexPattern& pattern, const std::string& input, const std::string& current_string, const int& current_id);
 
     // Checks if a line ID needs to be replaced
-    void replaceLineID(std::string& line, const std::string& current_string, int& current_id);
+    std::string replaceContentID(const RegexPattern& pattern, const std::string& content, const std::string& current_string, int& current_id);
 
     // Validates an xstr pair by comparing existing strings and IDs in the m_xstrList.
     // Fixes invalid IDs and generates new ones if required
-    void validateXSTR(const std::string& line, int& id);
+    void validateXSTR(const RegexPattern& pattern, const std::string& line, int& id);
 
     // Saves a pair to the m_xstrList vector
-    void savePair(const std::string& line, int id, bool invalid = false);
+    void savePair(const RegexPattern& pattern, const std::string& line, int id, bool invalid = false);
 
     // Write a pair to the output file, usually tstrings.tbl
     void writePair(XstrPair* this_pair);
@@ -142,15 +152,6 @@ private:
     std::string m_logFilePath;
     std::ofstream m_logFile;
     std::string m_currentFile;
-
-    // Struct for storing regex patterns and associated information
-    struct RegexPattern {
-        std::regex pattern;
-        int string_position;
-        int id_position;
-        int idx;
-        std::string pattern_string;
-    };
 
     // User options members
     std::string m_outputFilepath;

@@ -124,7 +124,7 @@ void XstrProcessor::logEntry(const std::string& text, bool update_terminal) {
     }
 }
 
-void XstrProcessor::savePair(const std::string& line, int id, bool invalid) {
+void XstrProcessor::savePair(const RegexPattern& pattern, const std::string& line, int id, bool invalid) {
     // A quick verification that -1 is the only invalid ID stored
     if (id < 0) {
         id = -1;
@@ -136,6 +136,7 @@ void XstrProcessor::savePair(const std::string& line, int id, bool invalid) {
     newPair.files.push_back(m_currentFile);
     newPair.discovery_order = ++m_total;
     newPair.invalid = invalid;
+    newPair.pattern = &pattern;
 
     m_xstrList.push_back(newPair);
 }
@@ -262,7 +263,7 @@ void XstrProcessor::updateIds() {
 }
 
 
-void XstrProcessor::validateXSTR(const std::string& line, int& id) {
+void XstrProcessor::validateXSTR(const RegexPattern& pattern, const std::string& line, int& id) {
     XstrPair* thisPair = findPair(line);
 
     if (thisPair == nullptr) {
@@ -274,7 +275,7 @@ void XstrProcessor::validateXSTR(const std::string& line, int& id) {
             if (!m_readOnly && !m_comprehensiveScan && (id < 0)) {
                 id = getNewId();
             }
-            savePair(line, id);
+            savePair(pattern, line, id);
         } else {
             bool invalid = false;
             // The ID matches, but the strings didn't so this is an invalid ID. Time to get a new one
@@ -290,7 +291,7 @@ void XstrProcessor::validateXSTR(const std::string& line, int& id) {
                     invalid = true;
                 }
             }
-            savePair(line, id, invalid);
+            savePair(pattern, line, id, invalid);
         }
     } else {
         // The string matches, does the ID?
@@ -334,26 +335,56 @@ void XstrProcessor::validateXSTR(const std::string& line, int& id) {
     }
 }
 
-std::string XstrProcessor::replacePattern(const std::string& input, const std::string& current_string, const int& current_id) {
-    std::regex pattern("\"([^\"]+)\",\\s*(-?\\d+)");
+std::string XstrProcessor::replacePattern(const RegexPattern& newPattern, const std::string& input, const std::string& current_string, const int& current_id) {
     std::smatch match;
 
-    if (std::regex_search(input, match, pattern)) {
-        // Replace the original number with the new one
-        return std::regex_replace(input, pattern, "\"" + current_string + "\", " + std::to_string(current_id));
+    // Use the provided regex pattern for searching
+    if (std::regex_search(input, match, newPattern.pattern)) {
+        // Check if we have enough matches for string_position and id_position
+        if (match.size() > newPattern.id_position) {
+            // Construct the replacement string
+            std::string replacement = match.str(0); // Start with the full matched substring
+
+            // Replace the part of the match at id_position with the new ID
+            // Calculate the start and end positions of the ID within the full match
+            size_t start = match.position(newPattern.id_position);
+            size_t length = match[newPattern.id_position].length();
+
+            // Replace the ID within the replacement string
+            try {
+                // Assuming 'start' and 'length' are calculated correctly
+                // and 'replacement' is a valid std::string object
+                replacement.replace(start, length, std::to_string(current_id));
+            }
+            catch (const std::exception& e) {
+                // Oopsie!
+                std::string msg = "Failed to replace string ID pair '" + current_string + "', skipping!";
+                logEntry(msg, false);
+                return input;
+            }
+
+            // Replace the matched substring in the input with the modified replacement string
+            std::string result = input;
+            result.replace(match.position(0), match.length(0), replacement);
+
+            return result;
+        }
     }
 
+    // If no match is found, or there's an issue with the positions, return the original input
     return input;
 }
 
-void XstrProcessor::replaceLineID(std::string& line, const std::string& current_string, int& current_id) {
+std::string XstrProcessor::replaceContentID(const RegexPattern& pattern, const std::string& content, const std::string& current_string, int& current_id) {
+    std::string modifiedContent = content;
+
     // In a comprehensive run then validation is already complete so
     // find the string in the list and use it's xstr in all cases
     if (m_comprehensiveScan) {
         XstrPair* thisPair = findPair(current_string);
         if (thisPair != nullptr) {
             current_id = thisPair->id;
-            line = replacePattern(line, current_string, current_id);
+            modifiedContent = replacePattern(*thisPair->pattern, modifiedContent, current_string, current_id);
         } else {
             // Well this isn't a good place to be.. log and skip!
             std::string msg = "Failed to find ID for string '" + current_string + "', skipping!";
@@ -362,12 +393,14 @@ void XstrProcessor::replaceLineID(std::string& line, const std::string& current_
     // If Replace_existing then everything gets a new ID
     } else if (m_replaceExisting) {
         current_id = m_offset + m_counter++;
-        validateXSTR(current_string, current_id);
-        line = replacePattern(line, current_string, current_id);
+        validateXSTR(pattern, current_string, current_id);
+        modifiedContent = replacePattern(pattern, modifiedContent, current_string, current_id);
     } else {
-        validateXSTR(current_string, current_id);
-        line = replacePattern(line, current_string, current_id);
+        validateXSTR(pattern, current_string, current_id);
+        modifiedContent = replacePattern(pattern, modifiedContent, current_string, current_id);
     }
+
+    return modifiedContent;
 }
 
 // Custom comparison function for sorting by discovery order
@@ -456,33 +489,29 @@ void XstrProcessor::processFile(const fs::path& file_path, bool write) {
         return;
     }
 
+    std::string msg;
+
     std::ifstream inputFile(file_path);
     if (!inputFile.is_open()) {
-        std::string msg = "Error opening file: " + file_path.string();
-        setTerminalText(msg);
+        msg = "Error opening file: " + file_path.string();
+        logEntry(msg);
         return;
     }
 
-    std::string modifiedContent = "";
-    std::string msg = "";
+    std::string content((std::istreambuf_iterator<char>(inputFile)),
+        std::istreambuf_iterator<char>());
+    inputFile.close();
+
+    msg = write ? "Processing file: " + file_path.filename().string() : "Reading file: " + file_path.filename().string();
+    logEntry(msg);
 
     bool found = false;
 
-    // Print to the terminal
-    if (write) {
-        msg = "Processing file: " + file_path.filename().string();
-    } else {
-        msg = "Reading file: " + file_path.filename().string();
-    }
-    
-    logEntry(msg);
-
-    std::string line;
-    while (std::getline(inputFile, line)) {
-        for (const auto& set : m_validPatterns) {
+    for (const auto& set : m_validPatterns) {
+        std::string::const_iterator searchStart(content.cbegin());
+        while (g_continueProcessing && searchStart != content.cend()) {
             std::smatch match;
-            if (g_continueProcessing && std::regex_search(line, match, set.pattern)) {
-
+            if (g_continueProcessing && std::regex_search(searchStart, content.cend(), match, set.pattern)) {
                 if (!found) {
                     found = true;
 
@@ -524,28 +553,37 @@ void XstrProcessor::processFile(const fs::path& file_path, bool write) {
                 }
 
                 if (write) {
-                    replaceLineID(line, currentString, id);
+                    // Calculate replacement content
+                    std::string replacement = replaceContentID(set, match.str(0), currentString, id);
+
+                    // Find the match position
+                    size_t pos = match.position(0) + std::distance(content.cbegin(), searchStart);
+                    // Replace the match in the content
+                    content.replace(pos, match.length(0), replacement);
+
+                    // Adjust searchStart for the next iteration
+                    searchStart = content.begin() + pos + replacement.length();
                 } else {
-                    validateXSTR(currentString, id);
+                    // Validate or log the match without modifying the content
+                    validateXSTR(set, currentString, id);
+                    // Move searchStart to the end of the current match to continue searching
+                    searchStart += match.position(0) + match.length(0);
                 }
+            } else {
+                break; // No more matches
             }
         }
-
-        // Append the modified line to the modified content
-        modifiedContent += line + '\n';
     }
-    inputFile.close();
 
-    if (write && found) {
-        // Write the modified content back to the file
+    // Write the modified content back to the file
+    if (g_continueProcessing && write && found) {
         std::ofstream outputFile(file_path, std::ofstream::trunc);
         if (!outputFile.is_open()) {
             msg = "Error saving file: " + file_path.string();
             logEntry(msg, false);
             return;
         }
-
-        outputFile << modifiedContent;
+        outputFile << content;
         outputFile.close();
     }
 
