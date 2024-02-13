@@ -20,22 +20,21 @@ PreloadPairsDialog::PreloadPairsDialog(Etemenanki* m_etemenanki, QWidget* parent
     ui.preload_table_widget->setColumnWidth(0, regexMainWidth);
     ui.preload_table_widget->setColumnWidth(1, m_preloadIdWidth);
 
-    //if (m_etemenanki) {
-        loadPreloadedPairs();
-    //}
+    loadPreloadedPairs();
 }
 
 void PreloadPairsDialog::accept() {
-    //if (m_etemenanki) {
-        savePreloadedPairs();
-    //}
-
+    savePreloadedPairs();
     QDialog::accept();
 }
 
 void PreloadPairsDialog::on_preload_add_button_clicked() {
     QString text = ui.preload_text_line_edit->text();
     QString id = ui.preload_id_line_edit->text();
+
+    if (text.isEmpty() || id.isEmpty()) {
+        return;
+    }
 
     if (addNewPair(text, id)) {
         ui.preload_text_line_edit->clear();

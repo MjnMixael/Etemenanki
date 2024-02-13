@@ -39,6 +39,10 @@ void IgnoreFilesDialog::addIgnoreFilesItem(QString path) {
 void IgnoreFilesDialog::on_ignore_files_add_button_clicked() {
     QString ext = ui.ignore_files_line_edit->text();
 
+    if (ext.isEmpty()) {
+        return;
+    }
+
     addIgnoreFilesItem(ext);
 }
 

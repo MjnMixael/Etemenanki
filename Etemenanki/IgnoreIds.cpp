@@ -42,9 +42,13 @@ void IgnoreIdsDialog::addIgnoreIdsItem(QString id) {
 }
 
 void IgnoreIdsDialog::on_ignore_ids_add_button_clicked() {
-    QString ext = ui.ignore_ids_line_edit->text();
+    QString id = ui.ignore_ids_line_edit->text();
 
-    addIgnoreIdsItem(ext);
+    if (id.isEmpty()) {
+        return;
+    }
+
+    addIgnoreIdsItem(id);
 }
 
 void IgnoreIdsDialog::on_ignore_ids_update_button_clicked() {
