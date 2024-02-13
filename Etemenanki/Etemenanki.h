@@ -69,12 +69,14 @@ public slots:
     void on_files_add_button_clicked();
     void on_files_update_button_clicked();
     void on_files_remove_button_clicked();
+    void on_files_clear_button_clicked();
     void on_files_list_widget_clicked();
 
     // Regex table widget
     void on_regex_add_button_clicked();
     void on_regex_update_button_clicked();
     void on_regex_remove_button_clicked();
+    void on_regex_clear_button_clicked();
     void on_regex_table_widget_clicked();
 
     // Read only widget

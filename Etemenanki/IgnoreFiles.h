@@ -25,6 +25,7 @@ public slots:
     void on_ignore_files_add_button_clicked();
     void on_ignore_files_update_button_clicked();
     void on_ignore_files_remove_button_clicked();
+    void on_ignore_files_clear_button_clicked();
     void on_ignore_files_list_widget_clicked();
 private:
     Ui::IgnoreFilesDialog ui;

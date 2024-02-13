@@ -12,6 +12,9 @@ PreloadPairsDialog::PreloadPairsDialog(Etemenanki* m_etemenanki, QWidget* parent
 
     ui.preload_id_line_edit->setValidator(new QIntValidator(0, INT_MAX, this));
 
+    ui.preload_update_button->setEnabled(false);
+    ui.preload_remove_button->setEnabled(false);
+
     int scrollBarWidth = qApp->style()->pixelMetric(QStyle::PM_ScrollBarExtent);
     int regexMainWidth = (ui.preload_table_widget->width() - m_preloadIdWidth - scrollBarWidth);
     ui.preload_table_widget->setColumnWidth(0, regexMainWidth);
@@ -66,6 +69,11 @@ void PreloadPairsDialog::on_preload_remove_button_clicked() {
 void PreloadPairsDialog::on_preload_clear_button_clicked() {
     ui.preload_table_widget->clear();
     ui.preload_table_widget->setRowCount(0);
+    ui.preload_text_line_edit->clear();
+    ui.preload_id_line_edit->clear();
+    ui.preload_update_button->setEnabled(false);
+    ui.preload_remove_button->setEnabled(false);
+    ui.preload_table_widget->clearSelection();
 }
 
 void PreloadPairsDialog::on_preload_table_widget_clicked() {

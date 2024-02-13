@@ -25,6 +25,7 @@ public slots:
     void on_ignore_ids_add_button_clicked();
     void on_ignore_ids_update_button_clicked();
     void on_ignore_ids_remove_button_clicked();
+    void on_ignore_ids_clear_button_clicked();
     void on_ignore_ids_list_widget_clicked();
 private:
     Ui::IgnoreIdsDialog ui;

@@ -204,6 +204,10 @@ void Etemenanki::addFileExtension(QString ext) {
 void Etemenanki::on_files_add_button_clicked() {
     QString ext = ui.files_line_edit->text();
 
+    if (ext.isEmpty()) {
+        return;
+    }
+
     addFileExtension(ext);
 }
 
@@ -232,6 +236,15 @@ void Etemenanki::on_files_remove_button_clicked() {
     ui.files_remove_button->setEnabled(false);
     ui.files_list_widget->clearSelection();
     update_terminal_output("File extension removed!");
+}
+
+void Etemenanki::on_files_clear_button_clicked() {
+    ui.files_list_widget->clear();
+    ui.files_line_edit->clear();
+    ui.files_update_button->setEnabled(false);
+    ui.files_remove_button->setEnabled(false);
+    ui.files_list_widget->clearSelection();
+    update_terminal_output("File extensions cleared!");
 }
 
 void Etemenanki::on_files_list_widget_clicked() {
@@ -337,6 +350,18 @@ void Etemenanki::on_regex_remove_button_clicked() {
     ui.regex_remove_button->setEnabled(false);
     ui.regex_table_widget->clearSelection();
     update_terminal_output("Regular expression removed!");
+}
+
+void Etemenanki::on_regex_clear_button_clicked() {
+    ui.regex_table_widget->clear();
+    ui.regex_table_widget->setRowCount(0);
+    ui.regex_line_edit->clear();
+    ui.position_string_line_edit->clear();
+    ui.position_id_line_edit->clear();
+    ui.regex_update_button->setEnabled(false);
+    ui.regex_remove_button->setEnabled(false);
+    ui.regex_table_widget->clearSelection();
+    update_terminal_output("Regular expressions cleared!");
 }
 
 void Etemenanki::on_regex_table_widget_clicked() {

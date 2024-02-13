@@ -12,6 +12,9 @@ IgnoreIdsDialog::IgnoreIdsDialog(Etemenanki* m_etemenanki, QWidget* parent) : QD
 
     ui.ignore_ids_line_edit->setValidator(new QIntValidator(0, INT_MAX, this));
 
+    ui.ignore_ids_update_button->setEnabled(false);
+    ui.ignore_ids_remove_button->setEnabled(false);
+
     for (int i = 0; i < m_etemenanki->m_ignoredIdsList.size(); i++) {
         addIgnoreIdsItem(m_etemenanki->m_ignoredIdsList[i]);
     }
@@ -59,6 +62,14 @@ void IgnoreIdsDialog::on_ignore_ids_update_button_clicked() {
 
 void IgnoreIdsDialog::on_ignore_ids_remove_button_clicked() {
     ui.ignore_ids_list_widget->takeItem(ui.ignore_ids_list_widget->currentRow());
+    ui.ignore_ids_line_edit->clear();
+    ui.ignore_ids_update_button->setEnabled(false);
+    ui.ignore_ids_remove_button->setEnabled(false);
+    ui.ignore_ids_list_widget->clearSelection();
+}
+
+void IgnoreIdsDialog::on_ignore_ids_clear_button_clicked() {
+    ui.ignore_ids_list_widget->clear();
     ui.ignore_ids_line_edit->clear();
     ui.ignore_ids_update_button->setEnabled(false);
     ui.ignore_ids_remove_button->setEnabled(false);

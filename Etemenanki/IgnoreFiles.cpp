@@ -10,6 +10,9 @@
 IgnoreFilesDialog::IgnoreFilesDialog(Etemenanki* m_etemenanki, QWidget* parent) : QDialog(parent), m_etemenanki(m_etemenanki) {
     ui.setupUi(this);
 
+    ui.ignore_files_update_button->setEnabled(false);
+    ui.ignore_files_remove_button->setEnabled(false);
+
     for (int i = 0; i < m_etemenanki->m_ignoredFilesList.size(); i++) {
         addIgnoreFilesItem(m_etemenanki->m_ignoredFilesList[i]);
     }
@@ -54,6 +57,14 @@ void IgnoreFilesDialog::on_ignore_files_update_button_clicked() {
 
 void IgnoreFilesDialog::on_ignore_files_remove_button_clicked() {
     ui.ignore_files_list_widget->takeItem(ui.ignore_files_list_widget->currentRow());
+    ui.ignore_files_line_edit->clear();
+    ui.ignore_files_update_button->setEnabled(false);
+    ui.ignore_files_remove_button->setEnabled(false);
+    ui.ignore_files_list_widget->clearSelection();
+}
+
+void IgnoreFilesDialog::on_ignore_files_clear_button_clicked() {
+    ui.ignore_files_list_widget->clear();
     ui.ignore_files_line_edit->clear();
     ui.ignore_files_update_button->setEnabled(false);
     ui.ignore_files_remove_button->setEnabled(false);
