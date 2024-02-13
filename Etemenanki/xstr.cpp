@@ -110,6 +110,15 @@ void XstrProcessor::addIgnoredFile(std::string path) {
     m_ignoredFiles.push_back(filepath);
 }
 
+void XstrProcessor::addIgnoredId(int id) {
+    if (id < 0) {
+        std::string msg = "ID '" + std::to_string(id) + "' is not valid. Ignoring!";
+        logEntry(msg, false);
+        return;
+    }
+    m_ignoredIds.push_back(id);
+}
+
 void XstrProcessor::setTerminalText(const std::string &text) {
     QString msg = QString::fromStdString(text);
     emit update_terminal_text(msg);
@@ -124,10 +133,14 @@ void XstrProcessor::logEntry(const std::string& text, bool update_terminal) {
     }
 }
 
-void XstrProcessor::savePair(const RegexPattern& pattern, const std::string& line, int id, bool invalid) {
+void XstrProcessor::savePair(const RegexPattern& pattern, const std::string& line, int& id, bool invalid) {
     // A quick verification that -1 is the only invalid ID stored
     if (id < 0) {
         id = -1;
+    }
+
+    if (isIdIgnored(id)) {
+        id = getNewId(id);
     }
 
     XstrPair newPair;
@@ -209,11 +222,27 @@ XstrPair* XstrProcessor::findPair(const int& id) {
     return nullptr;
 }
 
-int XstrProcessor::getNewId() {
+bool XstrProcessor::isIdIgnored(int id) {
+    for (size_t i = 0; i < m_ignoredIds.size(); i++) {
+        if (m_ignoredIds[i] == id) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+int XstrProcessor::getNewId(bool validate) {
     int newId = m_offset + m_counter++;
 
-    while (findPair(newId) != nullptr) {
+    while (isIdIgnored(newId)) {
         newId = m_offset + m_counter++;
+    }
+
+    if (validate) {
+        while (findPair(newId) != nullptr) {
+            newId = m_offset + m_counter++;
+        }
     }
 
     return newId;
@@ -397,7 +426,7 @@ std::string XstrProcessor::replaceContentID(const RegexPattern& pattern, const s
         }
     // If Replace_existing then everything gets a new ID
     } else if (m_replaceExisting) {
-        current_id = m_offset + m_counter++;
+        current_id = getNewId(false);
         validateXSTR(pattern, current_string, current_id);
         modifiedContent = replacePattern(pattern, modifiedContent, current_string, current_id);
     } else {

@@ -55,6 +55,9 @@
     <ClCompile Include="IgnoreFiles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IgnoreIds.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="xstr.h">
@@ -66,12 +69,18 @@
     <QtMoc Include="IgnoreFiles.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="IgnoreIds.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="Settings.ui">
       <Filter>Form Files</Filter>
     </QtUic>
     <QtUic Include="IgnoreFiles.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="IgnoreIds.ui">
       <Filter>Form Files</Filter>
     </QtUic>
   </ItemGroup>

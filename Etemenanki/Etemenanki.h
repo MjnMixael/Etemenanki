@@ -20,6 +20,7 @@
 #include "ui_Etemenanki.h"
 #include "Settings.h"
 #include "IgnoreFiles.h"
+#include "IgnoreIds.h"
 #include "xstr.h"
 
 class Etemenanki : public QMainWindow
@@ -49,6 +50,7 @@ public:
     static bool itemExists(QTableWidget* tableWidget, const QString& textToCheck);
 
     QVector<QString> m_ignoredFilesList;
+    QVector<QString> m_ignoredIdsList;
 
 public slots:
     // File extensions widget
@@ -79,7 +81,8 @@ public slots:
     void ui_save_settings();
     void ui_open_documentation();
     void ui_open_preferences();
-    void ui_open_ignore();
+    void ui_open_ignore_files();
+    void ui_open_ignore_ids();
 
 protected:
     void closeEvent(QCloseEvent* event) override;

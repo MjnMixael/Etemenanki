@@ -22,7 +22,7 @@ Etemenanki::Etemenanki(QWidget *parent)
     m_logFilePath = m_appDataPath + m_logFileName;
 
     // Set some ui configurations
-    ui.offset_line_edit->setValidator(new QIntValidator(0, 9999999, this));
+    ui.offset_line_edit->setValidator(new QIntValidator(0, INT_MAX, this));
     ui.position_string_line_edit->setValidator(new QIntValidator(0, 9, this));
     ui.position_id_line_edit->setValidator(new QIntValidator(0, 9, this));
     ui.regex_table_widget->setColumnWidth(0, m_regexCheckWidth);
@@ -71,8 +71,13 @@ void Etemenanki::ui_open_preferences() {
     dialog.exec();
 }
 
-void Etemenanki::ui_open_ignore() {
+void Etemenanki::ui_open_ignore_files() {
     IgnoreFilesDialog dialog(this, this);
+    dialog.exec();
+}
+
+void Etemenanki::ui_open_ignore_ids() {
+    IgnoreIdsDialog dialog(this, this);
     dialog.exec();
 }
 
@@ -404,6 +409,11 @@ void Etemenanki::on_begin_button_clicked() {
         m_xstrProcessor->addIgnoredFile(path);
     }
 
+    for (int i = 0; i < m_ignoredIdsList.size(); i++) {
+        int id = m_ignoredIdsList[i].toInt();
+        m_xstrProcessor->addIgnoredId(id);
+    }
+
     saveSettings();
 
     if (m_xstrProcessor->getNumFileExtensions() <= 0) {
@@ -513,15 +523,27 @@ void Etemenanki::loadSettings() {
     }
 
     m_ignoredFilesList.clear();
-    QJsonArray ignoredArray;
-    if (settings.contains("ignored_list")) {
-        ignoredArray = settings["ignored_list"].toArray();
+    QJsonArray ignoredFilesArray;
+    if (settings.contains("ignored_files_list")) {
+        ignoredFilesArray = settings["ignored_files_list"].toArray();
     } else {
-        ignoredArray = {};
+        ignoredFilesArray = {};
     }
 
-    for (const QJsonValue& value : ignoredArray) {
+    for (const QJsonValue& value : ignoredFilesArray) {
         m_ignoredFilesList.push_back(value.toString());
+    }
+
+    m_ignoredIdsList.clear();
+    QJsonArray ignoredIdsArray;
+    if (settings.contains("ignored_ids_list")) {
+        ignoredIdsArray = settings["ignored_ids_list"].toArray();
+    } else {
+        ignoredIdsArray = {};
+    }
+
+    for (const QJsonValue& value : ignoredIdsArray) {
+        m_ignoredIdsList.push_back(value.toString());
     }
 
     file.close();
@@ -565,11 +587,17 @@ void Etemenanki::saveSettings() {
     }
     settings["regex_rules"] = regexArray;
 
-    QJsonArray ignoredArray;
+    QJsonArray ignoredFilesArray;
     for (int i = 0; i < m_ignoredFilesList.size(); i++) {
-        ignoredArray.append(m_ignoredFilesList[i]);
+        ignoredFilesArray.append(m_ignoredFilesList[i]);
     }
-    settings["ignored_list"] = ignoredArray;
+    settings["ignored_files_list"] = ignoredFilesArray;
+
+    QJsonArray ignoredIdsArray;
+    for (int i = 0; i < m_ignoredIdsList.size(); i++) {
+        ignoredIdsArray.append(m_ignoredIdsList[i]);
+    }
+    settings["ignored_ids_list"] = ignoredIdsArray;
 
     QJsonDocument doc(settings);
     file.write(doc.toJson());

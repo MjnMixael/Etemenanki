@@ -85,6 +85,7 @@ public:
     void addFileExtension(std::string ext);
     void addRegexPattern(std::string pattern, int string_pos, int id_pos, int idx);
     void addIgnoredFile(std::string path);
+    void addIgnoredId(int);
     
     // Methods to get runtime information
     int getNumFileExtensions();
@@ -121,7 +122,7 @@ private:
     void validateXSTR(const RegexPattern& pattern, const std::string& line, int& id);
 
     // Saves a pair to the m_xstrList vector
-    void savePair(const RegexPattern& pattern, const std::string& line, int id, bool invalid = false);
+    void savePair(const RegexPattern& pattern, const std::string& line, int& id, bool invalid = false);
 
     // Write a pair to the output file, usually tstrings.tbl
     void writePair(XstrPair* this_pair);
@@ -130,7 +131,10 @@ private:
     void appendLocationToPair(XstrPair* this_pair);
 
     // Get a new unique xstr id
-    int getNewId();
+    int getNewId(bool validate = true);
+
+    // Check if an id is supposed to be ignored
+    bool isIdIgnored(int id);
     
     // Overloads to find an xstr pair
     XstrPair* findPair(const std::string& text);
@@ -169,4 +173,5 @@ private:
     std::vector<std::string> m_validExtensions;
     std::vector<RegexPattern> m_validPatterns;
     std::vector<fs::path> m_ignoredFiles;
+    std::vector<int> m_ignoredIds;
 };
