@@ -270,6 +270,14 @@ bool Etemenanki::addRegexRow(QString pattern, QString string_pos, QString id_pos
         id_pos = "2";
     }
 
+    if (string_pos.toInt() < 0) {
+        return false;
+    }
+
+    if (id_pos.toInt() < 0) {
+        return false;
+    }
+
     // Try to validate the regex
     std::regex reg;
     try {
@@ -415,6 +423,10 @@ void Etemenanki::loadPreloadedPairs() {
         pair.text = preloadItem["text"].toString().toStdString();
         pair.id = preloadItem["id"].toString().toInt();
         pair.files.push_back("Preloaded Pair");
+
+        if (pair.id < 0) {
+            continue;
+        }
 
         m_preloadedPairs.push_back(pair);
     }
@@ -632,7 +644,9 @@ void Etemenanki::loadSettings() {
     }
 
     for (const QJsonValue& value : ignoredIdsArray) {
-        m_ignoredIdsList.push_back(value.toString());
+        if (value.toString().toInt() > 0) {
+            m_ignoredIdsList.push_back(value.toString());
+        }
     }
 
     file.close();

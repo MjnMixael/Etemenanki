@@ -110,6 +110,10 @@ bool PreloadPairsDialog::addNewPair(QString text, QString id, int row) {
         return false;
     }
 
+    if (id.toInt() < 0) {
+        return false;
+    }
+
     if (row < 0) {
         if (!itemExists(ui.preload_table_widget,text, id)) {
             ui.preload_table_widget->insertRow(ui.preload_table_widget->rowCount());
