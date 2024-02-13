@@ -30,6 +30,7 @@ Below is an explenation of the home settings:
 * File Formats List: In order to speed up the process, Etemenanki will only parse files with extensions listed here. All other files will be ignored.
 * ID Offset: By default Etemenanki will generate new string IDs at 0, but you can provide an optional offset here instead.
 * Replace Existing: By default Etemenanki will not replace strings that have an existing valid ID. Check this button if you would like to change that behavior.
+* Read Only Mode: In this mode, Etemenanki will scan for String/ID pairs and print them all to the output file without generating new IDs and modifying the source files. The output file will include comments that note invalid IDs if they are detected.
 
 Below is an explenation of the preferences settings:
 
