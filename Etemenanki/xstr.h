@@ -42,8 +42,6 @@ struct XstrPair {
     int discovery_order;
     bool invalid;
 
-    // Stretch goal.. make file an array of files. If file size > 1 then print a comment listing all the files
-    // This particular pair was found in
     XstrPair() : id(-1), text(""), printed(false), files(), discovery_order(-1), invalid(false) {}
 };
 
@@ -78,6 +76,7 @@ public:
     void setCaseInsensitiveToggle(bool val);
     void setOffset(int val);
     void setLogFilePath(QString path);
+    void addPreloadPair(XstrPair pair);
 
     // Method to set runtime vectors
     void clearVectors();

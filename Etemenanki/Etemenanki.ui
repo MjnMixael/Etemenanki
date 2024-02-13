@@ -788,6 +788,7 @@ Make sure your directory path is correct!</string>
      <string>File</string>
     </property>
     <addaction name="actionPreferences"/>
+    <addaction name="actionPreload_Pairs"/>
     <addaction name="actionIgnore_Files"/>
     <addaction name="actionIgnore_Ids"/>
     <addaction name="separator"/>
@@ -846,6 +847,11 @@ Make sure your directory path is correct!</string>
   <action name="actionIgnore_Ids">
    <property name="text">
     <string>Ignore Ids</string>
+   </property>
+  </action>
+  <action name="actionPreload_Pairs">
+   <property name="text">
+    <string>Preload Pairs</string>
    </property>
   </action>
  </widget>
@@ -950,6 +956,22 @@ Make sure your directory path is correct!</string>
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionPreload_Pairs</sender>
+   <signal>triggered()</signal>
+   <receiver>EtemenankiClass</receiver>
+   <slot>ui_open_preload_pairs()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>444</x>
+     <y>211</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>ui_save_settings()</slot>
@@ -957,5 +979,6 @@ Make sure your directory path is correct!</string>
   <slot>ui_open_preferences()</slot>
   <slot>ui_open_ignore_files()</slot>
   <slot>ui_open_ignore_ids()</slot>
+  <slot>ui_open_preload_pairs()</slot>
  </slots>
 </ui>

@@ -119,6 +119,10 @@ void XstrProcessor::addIgnoredId(int id) {
     m_ignoredIds.push_back(id);
 }
 
+void XstrProcessor::addPreloadPair(XstrPair pair) {
+    m_xstrList.push_back(pair);
+}
+
 void XstrProcessor::setTerminalText(const std::string &text) {
     QString msg = QString::fromStdString(text);
     emit update_terminal_text(msg);

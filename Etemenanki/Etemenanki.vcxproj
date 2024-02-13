@@ -102,6 +102,7 @@ xcopy /y "C:\Qt\5.15.2\msvc2019_64\plugins\platforms\qwindows.dll" "$(OutDir)pla
   <ItemGroup>
     <ClCompile Include="IgnoreFiles.cpp" />
     <ClCompile Include="IgnoreIds.cpp" />
+    <ClCompile Include="PreloadPairs.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="xstr.cpp" />
     <QtRcc Include="Etemenanki.qrc" />
@@ -113,6 +114,7 @@ xcopy /y "C:\Qt\5.15.2\msvc2019_64\plugins\platforms\qwindows.dll" "$(OutDir)pla
     <None Include="Etemenanki.ico" />
     <QtUic Include="IgnoreIds.ui" />
     <QtUic Include="Settings.ui" />
+    <QtUic Include="PreloadPairs.ui" />
     <ResourceCompile Include="Etemenanki.rc" />
   </ItemGroup>
   <ItemGroup>
@@ -126,6 +128,9 @@ xcopy /y "C:\Qt\5.15.2\msvc2019_64\plugins\platforms\qwindows.dll" "$(OutDir)pla
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="IgnoreIds.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="PreloadPairs.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

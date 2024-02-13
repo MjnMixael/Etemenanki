@@ -83,6 +83,11 @@ void Etemenanki::ui_open_ignore_ids() {
     dialog.exec();
 }
 
+void Etemenanki::ui_open_preload_pairs() {
+    PreloadPairsDialog dialog(this, this);
+    dialog.exec();
+}
+
 void Etemenanki::closeEvent(QCloseEvent* event) {
     if (m_xstrProcessor->isRunning()) {
         g_continueProcessing = false;
@@ -357,6 +362,37 @@ void Etemenanki::on_read_only_checkbox_clicked() {
     m_readOnly = ui.read_only_checkbox->isChecked();
 }
 
+void Etemenanki::loadPreloadedPairs() {
+    QString filepath = m_appDataPath + m_preloadFilename;
+    QDir().mkpath(QFileInfo(filepath).absolutePath()); // Ensure the directory exists
+    QFile file(filepath);
+
+    QJsonObject settings = {};
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QJsonDocument doc(QJsonDocument::fromJson(file.readAll()));
+        settings = doc.object();
+    }
+
+    QJsonArray preloadPairsArray;
+    if (settings.contains("preload_pairs_list")) {
+        preloadPairsArray = settings["preload_pairs_list"].toArray();
+    } else {
+        preloadPairsArray = {};
+    }
+
+    m_preloadedPairs.clear();
+    foreach(const QJsonValue & value, preloadPairsArray) {
+        QJsonObject preloadItem = value.toObject();
+
+        XstrPair pair;
+        pair.text = preloadItem["text"].toString().toStdString();
+        pair.id = preloadItem["id"].toString().toInt();
+        pair.files.push_back("Preloaded Pair");
+
+        m_preloadedPairs.push_back(pair);
+    }
+}
+
 void Etemenanki::on_begin_button_clicked() {
     if (m_xstrProcessor->isRunning()) {
         ui.begin_button->setEnabled(false); // Prevent double clicks
@@ -364,6 +400,8 @@ void Etemenanki::on_begin_button_clicked() {
         update_terminal_output("Terminate requested! Please wait...");
         return;
     }
+
+    loadPreloadedPairs();
 
     m_xstrProcessor->clearVectors();
     
@@ -405,6 +443,10 @@ void Etemenanki::on_begin_button_clicked() {
     m_xstrProcessor->setAnnotationsToggle(m_verboseAnnotations);
     m_xstrProcessor->setReadOnlyToggle(m_readOnly);
     m_xstrProcessor->setCaseInsensitiveToggle(m_caseInsensitive);
+
+    for (auto pair : m_preloadedPairs) {
+        m_xstrProcessor->addPreloadPair(pair);
+    }
 
     for (int i = 0; i < ui.files_list_widget->count(); ++i) {
         std::string ext = ui.files_list_widget->item(i)->text().toStdString();

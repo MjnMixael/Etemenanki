@@ -22,6 +22,7 @@
 #include "Settings.h"
 #include "IgnoreFiles.h"
 #include "IgnoreIds.h"
+#include "PreloadPairs.h"
 #include "xstr.h"
 
 class Etemenanki : public QMainWindow
@@ -50,8 +51,14 @@ public:
     static bool itemExists(QListWidget* listWidget, const QString& textToCheck);
     static bool itemExists(QTableWidget* tableWidget, const QString& textToCheck);
 
+    // Public vectors
     QVector<QString> m_ignoredFilesList;
     QVector<QString> m_ignoredIdsList;
+    QVector<XstrPair> m_preloadedPairs;
+
+    //Public variables
+    QString m_appDataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/Etemenanki/";
+    QString m_preloadFilename = "xstr_pairs.json";
 
 public slots:
     // Browse buttons
@@ -88,6 +95,7 @@ public slots:
     void ui_open_preferences();
     void ui_open_ignore_files();
     void ui_open_ignore_ids();
+    void ui_open_preload_pairs();
 
 protected:
     void closeEvent(QCloseEvent* event) override;
@@ -99,7 +107,6 @@ private:
     QString m_title = "Etemenanki";
     QString m_version = "v.1.4.0";
     QString m_description = "A translation tool for FreespaceOpen!";
-    QString m_appDataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/Etemenanki/";
     QString m_settingsFileName = "settings.json";
     QString m_settingsFilePath;
     QString m_logFileName = "Etemenanki.log";
@@ -120,6 +127,9 @@ private:
     void loadSettings();
     void saveSettings();
     void resetInterface();
+
+    // Data control methods
+    void loadPreloadedPairs();
 
     // Default user values
     QString m_defaultOutputFile = "tstrings.tbl";
