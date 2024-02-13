@@ -72,7 +72,7 @@ void Etemenanki::ui_open_preferences() {
 }
 
 void Etemenanki::ui_open_ignore() {
-    IgnoreDialog dialog(this, this);
+    IgnoreFilesDialog dialog(this, this);
     dialog.exec();
 }
 
