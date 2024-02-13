@@ -357,8 +357,13 @@ std::string XstrProcessor::replacePattern(const RegexPattern& newPattern, const 
                 replacement.replace(start, length, std::to_string(current_id));
             }
             catch (const std::exception& e) {
-                // Oopsie!
-                std::string msg = "Failed to replace string ID pair '" + current_string + "', skipping!";
+                // If we are here then that usually means we're trying to replace an id that's already been replaced
+                std::string text = current_string;
+                if (text.length() > 50) {
+                    text.resize(50);
+                    text += "...";
+                }
+                std::string msg = "Id for string '" + text + "', may have already been replaced!";
                 logEntry(msg, false);
                 return input;
             }
