@@ -92,7 +92,7 @@ private:
 
     // Generic UI and application settings
     QString m_title = "Etemenanki";
-    QString m_version = "v.1.3.0";
+    QString m_version = "v.1.4.0";
     QString m_description = "A translation tool for FreespaceOpen!";
     QString m_appDataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/Etemenanki/";
     QString m_settingsFileName = "settings.json";

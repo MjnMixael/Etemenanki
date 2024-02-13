@@ -736,7 +736,7 @@ void XstrProcessor::run() {
         m_offset = 0;
     }
 
-    std::string thisOffset = "Starting new XSTR IDs at " + m_offset;
+    std::string thisOffset = "Starting new XSTR IDs at " + std::to_string(m_offset);
     logEntry(thisOffset, false);
 
     if (m_readOnly) {
@@ -768,6 +768,8 @@ void XstrProcessor::run() {
     addIgnoredFile(outputPath);
 
     m_xstrList.clear();
+    m_counter = 0;
+    m_total = 0;
 
     // Notify that processing is starting
     g_continueProcessing = true;
