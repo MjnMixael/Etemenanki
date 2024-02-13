@@ -33,4 +33,5 @@ private:
 
     // UI Controls
     void addIgnoreFilesItem(QString path);
+    void resetIgnoreFilesInput();
 };

@@ -41,6 +41,13 @@ void IgnoreIdsDialog::addIgnoreIdsItem(QString id) {
     }
 }
 
+void IgnoreIdsDialog::resetIgnoreIdsInput() {
+    ui.ignore_ids_line_edit->clear();
+    ui.ignore_ids_update_button->setEnabled(false);
+    ui.ignore_ids_remove_button->setEnabled(false);
+    ui.ignore_ids_list_widget->clearSelection();
+}
+
 void IgnoreIdsDialog::on_ignore_ids_add_button_clicked() {
     QString id = ui.ignore_ids_line_edit->text();
 
@@ -53,31 +60,27 @@ void IgnoreIdsDialog::on_ignore_ids_add_button_clicked() {
 
 void IgnoreIdsDialog::on_ignore_ids_update_button_clicked() {
     int i = ui.ignore_ids_list_widget->currentRow();
-    QString path = ui.ignore_ids_line_edit->text();
+    QString id = ui.ignore_ids_line_edit->text();
 
-    if (!Etemenanki::itemExists(ui.ignore_ids_list_widget, path)) {
-        ui.ignore_ids_list_widget->item(i)->setText(path);
-        ui.ignore_ids_line_edit->clear();
-        ui.ignore_ids_update_button->setEnabled(false);
-        ui.ignore_ids_remove_button->setEnabled(false);
-        ui.ignore_ids_list_widget->clearSelection();
+    if (id.isEmpty()) {
+        resetIgnoreIdsInput();
+        return;
+    }
+
+    if (!Etemenanki::itemExists(ui.ignore_ids_list_widget, id)) {
+        ui.ignore_ids_list_widget->item(i)->setText(id);
+        resetIgnoreIdsInput();
     }
 }
 
 void IgnoreIdsDialog::on_ignore_ids_remove_button_clicked() {
     ui.ignore_ids_list_widget->takeItem(ui.ignore_ids_list_widget->currentRow());
-    ui.ignore_ids_line_edit->clear();
-    ui.ignore_ids_update_button->setEnabled(false);
-    ui.ignore_ids_remove_button->setEnabled(false);
-    ui.ignore_ids_list_widget->clearSelection();
+    resetIgnoreIdsInput();
 }
 
 void IgnoreIdsDialog::on_ignore_ids_clear_button_clicked() {
     ui.ignore_ids_list_widget->clear();
-    ui.ignore_ids_line_edit->clear();
-    ui.ignore_ids_update_button->setEnabled(false);
-    ui.ignore_ids_remove_button->setEnabled(false);
-    ui.ignore_ids_list_widget->clearSelection();
+    resetIgnoreIdsInput();
 }
 
 void IgnoreIdsDialog::on_ignore_ids_list_widget_clicked() {

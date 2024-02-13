@@ -43,4 +43,6 @@ private:
     void loadPreloadedPairs();
     void savePreloadedPairs();
 
+    void resetPreloadPairsInput();
+
 };

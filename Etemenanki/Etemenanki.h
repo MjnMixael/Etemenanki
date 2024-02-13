@@ -129,6 +129,8 @@ private:
     void loadSettings();
     void saveSettings();
     void resetInterface();
+    void resetFileExtensionInput();
+    void resetRegexInput();
 
     // Data control methods
     void loadPreloadedPairs();

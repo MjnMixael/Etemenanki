@@ -36,43 +36,46 @@ void IgnoreFilesDialog::addIgnoreFilesItem(QString path) {
     }
 }
 
-void IgnoreFilesDialog::on_ignore_files_add_button_clicked() {
-    QString ext = ui.ignore_files_line_edit->text();
+void IgnoreFilesDialog::resetIgnoreFilesInput() {
+    ui.ignore_files_line_edit->clear();
+    ui.ignore_files_update_button->setEnabled(false);
+    ui.ignore_files_remove_button->setEnabled(false);
+    ui.ignore_files_list_widget->clearSelection();
+}
 
-    if (ext.isEmpty()) {
+void IgnoreFilesDialog::on_ignore_files_add_button_clicked() {
+    QString path = ui.ignore_files_line_edit->text();
+
+    if (path.isEmpty()) {
         return;
     }
 
-    addIgnoreFilesItem(ext);
+    addIgnoreFilesItem(path);
 }
 
 void IgnoreFilesDialog::on_ignore_files_update_button_clicked() {
     int i = ui.ignore_files_list_widget->currentRow();
     QString path = ui.ignore_files_line_edit->text();
 
+    if (path.isEmpty()) {
+        resetIgnoreFilesInput();
+        return;
+    }
+
     if (!Etemenanki::itemExists(ui.ignore_files_list_widget, path)) {
         ui.ignore_files_list_widget->item(i)->setText(path);
-        ui.ignore_files_line_edit->clear();
-        ui.ignore_files_update_button->setEnabled(false);
-        ui.ignore_files_remove_button->setEnabled(false);
-        ui.ignore_files_list_widget->clearSelection();
+        resetIgnoreFilesInput();
     }
 }
 
 void IgnoreFilesDialog::on_ignore_files_remove_button_clicked() {
     ui.ignore_files_list_widget->takeItem(ui.ignore_files_list_widget->currentRow());
-    ui.ignore_files_line_edit->clear();
-    ui.ignore_files_update_button->setEnabled(false);
-    ui.ignore_files_remove_button->setEnabled(false);
-    ui.ignore_files_list_widget->clearSelection();
+    resetIgnoreFilesInput();
 }
 
 void IgnoreFilesDialog::on_ignore_files_clear_button_clicked() {
     ui.ignore_files_list_widget->clear();
-    ui.ignore_files_line_edit->clear();
-    ui.ignore_files_update_button->setEnabled(false);
-    ui.ignore_files_remove_button->setEnabled(false);
-    ui.ignore_files_list_widget->clearSelection();
+    resetIgnoreFilesInput();
 }
 
 void IgnoreFilesDialog::on_ignore_files_list_widget_clicked() {

@@ -28,6 +28,14 @@ void PreloadPairsDialog::accept() {
     QDialog::accept();
 }
 
+void PreloadPairsDialog::resetPreloadPairsInput() {
+    ui.preload_text_line_edit->clear();
+    ui.preload_id_line_edit->clear();
+    ui.preload_update_button->setEnabled(false);
+    ui.preload_remove_button->setEnabled(false);
+    ui.preload_table_widget->clearSelection();
+}
+
 void PreloadPairsDialog::on_preload_add_button_clicked() {
     QString text = ui.preload_text_line_edit->text();
     QString id = ui.preload_id_line_edit->text();
@@ -47,32 +55,25 @@ void PreloadPairsDialog::on_preload_update_button_clicked() {
     QString text = ui.preload_text_line_edit->text();
     QString id = ui.preload_id_line_edit->text();
 
+    if (text.isEmpty() || id.isEmpty()) {
+        resetPreloadPairsInput();
+        return;
+    }
+
     if (addNewPair(text, id, i)) {
-        ui.preload_text_line_edit->clear();
-        ui.preload_id_line_edit->clear();
-        ui.preload_update_button->setEnabled(false);
-        ui.preload_remove_button->setEnabled(false);
-        ui.preload_table_widget->clearSelection();
+        resetPreloadPairsInput();
     }
 }
 
 void PreloadPairsDialog::on_preload_remove_button_clicked() {
     ui.preload_table_widget->removeRow(ui.preload_table_widget->currentRow());
-    ui.preload_text_line_edit->clear();
-    ui.preload_id_line_edit->clear();
-    ui.preload_update_button->setEnabled(false);
-    ui.preload_remove_button->setEnabled(false);
-    ui.preload_table_widget->clearSelection();
+    resetPreloadPairsInput();
 }
 
 void PreloadPairsDialog::on_preload_clear_button_clicked() {
     ui.preload_table_widget->clear();
     ui.preload_table_widget->setRowCount(0);
-    ui.preload_text_line_edit->clear();
-    ui.preload_id_line_edit->clear();
-    ui.preload_update_button->setEnabled(false);
-    ui.preload_remove_button->setEnabled(false);
-    ui.preload_table_widget->clearSelection();
+    resetPreloadPairsInput();
 }
 
 void PreloadPairsDialog::on_preload_table_widget_clicked() {

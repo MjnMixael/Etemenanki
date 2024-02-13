@@ -201,6 +201,13 @@ void Etemenanki::addFileExtension(QString ext) {
     }
 }
 
+void Etemenanki::resetFileExtensionInput() {
+    ui.files_line_edit->clear();
+    ui.files_update_button->setEnabled(false);
+    ui.files_remove_button->setEnabled(false);
+    ui.files_list_widget->clearSelection();
+}
+
 void Etemenanki::on_files_add_button_clicked() {
     QString ext = ui.files_line_edit->text();
 
@@ -215,35 +222,31 @@ void Etemenanki::on_files_update_button_clicked() {
     int i = ui.files_list_widget->currentRow();
     QString ext = ui.files_line_edit->text();
 
+    if (ext.isEmpty()) {
+        resetFileExtensionInput();
+        return;
+    }
+
     if (ext.at(0) != ".") {
         ext.prepend(".");
     }
 
     if (!itemExists(ui.files_list_widget, ext)) {
         ui.files_list_widget->item(i)->setText(ext);
-        ui.files_line_edit->clear();
-        ui.files_update_button->setEnabled(false);
-        ui.files_remove_button->setEnabled(false);
-        ui.files_list_widget->clearSelection();
+        resetFileExtensionInput();
         update_terminal_output("File extension updated!");
     }
 }
 
 void Etemenanki::on_files_remove_button_clicked() {
     ui.files_list_widget->takeItem(ui.files_list_widget->currentRow());
-    ui.files_line_edit->clear();
-    ui.files_update_button->setEnabled(false);
-    ui.files_remove_button->setEnabled(false);
-    ui.files_list_widget->clearSelection();
+    resetFileExtensionInput();
     update_terminal_output("File extension removed!");
 }
 
 void Etemenanki::on_files_clear_button_clicked() {
     ui.files_list_widget->clear();
-    ui.files_line_edit->clear();
-    ui.files_update_button->setEnabled(false);
-    ui.files_remove_button->setEnabled(false);
-    ui.files_list_widget->clearSelection();
+    resetFileExtensionInput();
     update_terminal_output("File extensions cleared!");
 }
 
@@ -310,6 +313,15 @@ bool Etemenanki::addRegexRow(QString pattern, QString string_pos, QString id_pos
     return false;
 }
 
+void Etemenanki::resetRegexInput() {
+    ui.regex_line_edit->clear();
+    ui.position_string_line_edit->clear();
+    ui.position_id_line_edit->clear();
+    ui.regex_update_button->setEnabled(false);
+    ui.regex_remove_button->setEnabled(false);
+    ui.regex_table_widget->clearSelection();
+}
+
 void Etemenanki::on_regex_add_button_clicked() {
     QString regex = ui.regex_line_edit->text();
     QString string_pos = ui.position_string_line_edit->text();
@@ -330,37 +342,27 @@ void Etemenanki::on_regex_update_button_clicked() {
     QString id_pos = ui.position_id_line_edit->text();
     bool checked = isRowChecked(i);
 
+    if (regex.isEmpty() || string_pos.isEmpty() || id_pos.isEmpty()) {
+        resetRegexInput();
+        return;
+    }
+
     if (addRegexRow(regex, string_pos, id_pos, checked, i)) {
-        ui.regex_line_edit->clear();
-        ui.position_string_line_edit->clear();
-        ui.position_id_line_edit->clear();
-        ui.regex_update_button->setEnabled(false);
-        ui.regex_remove_button->setEnabled(false);
-        ui.regex_table_widget->clearSelection();
+        resetRegexInput();
         update_terminal_output("Regular expression updated!");
     }
 }
 
 void Etemenanki::on_regex_remove_button_clicked() {
     ui.regex_table_widget->removeRow(ui.regex_table_widget->currentRow());
-    ui.regex_line_edit->clear();
-    ui.position_string_line_edit->clear();
-    ui.position_id_line_edit->clear();
-    ui.regex_update_button->setEnabled(false);
-    ui.regex_remove_button->setEnabled(false);
-    ui.regex_table_widget->clearSelection();
+    resetRegexInput();
     update_terminal_output("Regular expression removed!");
 }
 
 void Etemenanki::on_regex_clear_button_clicked() {
     ui.regex_table_widget->clear();
     ui.regex_table_widget->setRowCount(0);
-    ui.regex_line_edit->clear();
-    ui.position_string_line_edit->clear();
-    ui.position_id_line_edit->clear();
-    ui.regex_update_button->setEnabled(false);
-    ui.regex_remove_button->setEnabled(false);
-    ui.regex_table_widget->clearSelection();
+    resetRegexInput();
     update_terminal_output("Regular expressions cleared!");
 }
 

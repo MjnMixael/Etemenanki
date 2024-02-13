@@ -33,4 +33,5 @@ private:
 
     // UI Controls
     void addIgnoreIdsItem(QString id);
+    void resetIgnoreIdsInput();
 };
