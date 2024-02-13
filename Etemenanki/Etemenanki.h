@@ -16,6 +16,7 @@
 #include <QJsonArray>
 #include <QStandardPaths>
 #include <QDesktopServices>
+#include <QFileDialog>
 
 #include "ui_Etemenanki.h"
 #include "Settings.h"
@@ -53,6 +54,10 @@ public:
     QVector<QString> m_ignoredIdsList;
 
 public slots:
+    // Browse buttons
+    void on_directory_browse_button_clicked();
+    void on_output_directory_browse_button_clicked();
+    
     // File extensions widget
     void on_files_add_button_clicked();
     void on_files_update_button_clicked();

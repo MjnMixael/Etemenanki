@@ -303,7 +303,7 @@
      <rect>
       <x>10</x>
       <y>30</y>
-      <width>871</width>
+      <width>741</width>
       <height>22</height>
      </rect>
     </property>
@@ -715,6 +715,32 @@ Make sure your directory path is correct!</string>
      <string>Read Only Mode</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="directory_browse_button">
+    <property name="geometry">
+     <rect>
+      <x>760</x>
+      <y>30</y>
+      <width>121</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Browse</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="output_directory_browse_button">
+    <property name="geometry">
+     <rect>
+      <x>510</x>
+      <y>298</y>
+      <width>121</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Browse</string>
+    </property>
+   </widget>
    <zorder>frame_2</zorder>
    <zorder>frame</zorder>
    <zorder>begin_button</zorder>
@@ -745,6 +771,8 @@ Make sure your directory path is correct!</string>
    <zorder>output_directory_line_edit</zorder>
    <zorder>output_directory_label</zorder>
    <zorder>read_only_checkbox</zorder>
+   <zorder>directory_browse_button</zorder>
+   <zorder>output_directory_browse_button</zorder>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -752,7 +780,7 @@ Make sure your directory path is correct!</string>
      <x>0</x>
      <y>0</y>
      <width>890</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -761,7 +789,7 @@ Make sure your directory path is correct!</string>
     </property>
     <addaction name="actionPreferences"/>
     <addaction name="actionIgnore_Files"/>
-	<addaction name="actionIgnore_Ids"/>
+    <addaction name="actionIgnore_Ids"/>
     <addaction name="separator"/>
     <addaction name="actionSave_Settings"/>
     <addaction name="actionExit"/>

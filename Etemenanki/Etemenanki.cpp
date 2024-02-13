@@ -150,6 +150,24 @@ void Etemenanki::toggleOffsetControl(bool val) {
     ui.offset_line_edit->setEnabled(val);
 }
 
+void Etemenanki::on_directory_browse_button_clicked() {
+    QString directory = QFileDialog::getExistingDirectory(this, tr("Select Directory"),
+        ui.directory_line_edit->text(),
+        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    if (!directory.isEmpty()) {
+        ui.directory_line_edit->setText(directory);
+    }
+}
+
+void Etemenanki::on_output_directory_browse_button_clicked() {
+    QString directory = QFileDialog::getExistingDirectory(this, tr("Select Directory"),
+        ui.output_directory_line_edit->text(),
+        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    if (!directory.isEmpty()) {
+        ui.output_directory_line_edit->setText(directory);
+    }
+}
+
 bool Etemenanki::itemExists(QListWidget* listWidget, const QString& textToCheck) {
     for (int i = 0; i < listWidget->count(); ++i) {
         QListWidgetItem* item = listWidget->item(i);
