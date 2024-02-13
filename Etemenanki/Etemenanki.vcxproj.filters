@@ -52,7 +52,7 @@
     <ClCompile Include="Settings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Ignore.cpp">
+    <ClCompile Include="IgnoreFiles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -63,7 +63,7 @@
     <QtMoc Include="Settings.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="Ignore.h">
+    <QtMoc Include="IgnoreFiles.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
@@ -71,7 +71,7 @@
     <QtUic Include="Settings.ui">
       <Filter>Form Files</Filter>
     </QtUic>
-    <QtUic Include="Ignore.ui">
+    <QtUic Include="IgnoreFiles.ui">
       <Filter>Form Files</Filter>
     </QtUic>
   </ItemGroup>

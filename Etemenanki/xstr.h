@@ -84,7 +84,7 @@ public:
     void clearVectors();
     void addFileExtension(std::string ext);
     void addRegexPattern(std::string pattern, int string_pos, int id_pos, int idx);
-    void addIgnoredItem(std::string path);
+    void addIgnoredFile(std::string path);
     
     // Methods to get runtime information
     int getNumFileExtensions();
@@ -168,5 +168,5 @@ private:
     bool m_caseInsensitive = false;
     std::vector<std::string> m_validExtensions;
     std::vector<RegexPattern> m_validPatterns;
-    std::vector<fs::path> m_ignoredItems;
+    std::vector<fs::path> m_ignoredFiles;
 };

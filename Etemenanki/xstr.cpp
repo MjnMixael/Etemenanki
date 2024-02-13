@@ -77,7 +77,7 @@ int XstrProcessor::getNumRegexPatterns() {
 void XstrProcessor::clearVectors() {
     m_validExtensions.clear();
     m_validPatterns.clear();
-    m_ignoredItems.clear();
+    m_ignoredFiles.clear();
 }
 
 void XstrProcessor::addFileExtension(std::string ext) {
@@ -97,7 +97,7 @@ void XstrProcessor::addRegexPattern(std::string pattern, int string_pos, int id_
     m_validPatterns.push_back(thisPattern);
 }
 
-void XstrProcessor::addIgnoredItem(std::string path) {
+void XstrProcessor::addIgnoredFile(std::string path) {
     fs::path filepath;
     try {
         filepath = fs::canonical(path).string();
@@ -107,7 +107,7 @@ void XstrProcessor::addIgnoredItem(std::string path) {
         logEntry(msg, false);
         return;
     }
-    m_ignoredItems.push_back(filepath);
+    m_ignoredFiles.push_back(filepath);
 }
 
 void XstrProcessor::setTerminalText(const std::string &text) {
@@ -613,7 +613,7 @@ bool XstrProcessor::isPathIgnored(const std::filesystem::directory_entry& entry)
     // Check if entry is a directory
     if (entryPath.has_extension()) {
         // It's a file, check if it or its parent directory is in the ignore list
-        for (const auto& path : m_ignoredItems) {
+        for (const auto& path : m_ignoredFiles) {
             if (entryPath == path || entryPath.parent_path() == path) {
                 logEntry("Ignoring path: " + entryPath.string(), false);
                 return true;
@@ -621,7 +621,7 @@ bool XstrProcessor::isPathIgnored(const std::filesystem::directory_entry& entry)
         }
     } else {
         // It's a directory, check if it's in the ignore list
-        for (const auto& path : m_ignoredItems) {
+        for (const auto& path : m_ignoredFiles) {
             if (entryPath == path) {
                 logEntry("Ignoring path: " + entryPath.string(), false);
                 return true;
@@ -736,7 +736,7 @@ void XstrProcessor::run() {
 
     // Add our output file to the ignore list
     std::string outputPath = m_outputFilepath + m_outputFilename;
-    addIgnoredItem(outputPath);
+    addIgnoredFile(outputPath);
 
     m_xstrList.clear();
 

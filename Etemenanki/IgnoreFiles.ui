@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>IgnoreDialog</class>
- <widget class="QDialog" name="IgnoreDialog">
+ <class>IgnoreFilesDialog</class>
+ <widget class="QDialog" name="IgnoreFilesDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -67,7 +67,7 @@
     </item>
    </layout>
   </widget>
-  <widget class="QLineEdit" name="ignore_line_edit">
+  <widget class="QLineEdit" name="ignore_files_line_edit">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -80,7 +80,7 @@
     <number>32767</number>
    </property>
   </widget>
-  <widget class="QListWidget" name="ignore_list_widget">
+  <widget class="QListWidget" name="ignore_files_list_widget">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -90,7 +90,7 @@
     </rect>
    </property>
   </widget>
-  <widget class="QPushButton" name="ignore_remove_button">
+  <widget class="QPushButton" name="ignore_files_remove_button">
    <property name="geometry">
     <rect>
      <x>470</x>
@@ -103,7 +103,7 @@
     <string>Remove</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="ignore_add_button">
+  <widget class="QPushButton" name="ignore_files_add_button">
    <property name="geometry">
     <rect>
      <x>470</x>
@@ -116,7 +116,7 @@
     <string>Add</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="ignore_update_button">
+  <widget class="QPushButton" name="ignore_files_update_button">
    <property name="geometry">
     <rect>
      <x>470</x>
@@ -129,7 +129,7 @@
     <string>Update</string>
    </property>
   </widget>
-  <widget class="QLabel" name="ignore_label">
+  <widget class="QLabel" name="ignore_files_label">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -148,7 +148,7 @@
   <connection>
    <sender>okButton</sender>
    <signal>clicked()</signal>
-   <receiver>IgnoreDialog</receiver>
+   <receiver>IgnoreFilesDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -164,7 +164,7 @@
   <connection>
    <sender>cancelButton</sender>
    <signal>clicked()</signal>
-   <receiver>IgnoreDialog</receiver>
+   <receiver>IgnoreFilesDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

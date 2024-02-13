@@ -399,9 +399,9 @@ void Etemenanki::on_begin_button_clicked() {
         }
     }
 
-    for (int i = 0; i < m_ignoredList.size(); i++) {
-        std::string path = m_ignoredList[i].toStdString();
-        m_xstrProcessor->addIgnoredItem(path);
+    for (int i = 0; i < m_ignoredFilesList.size(); i++) {
+        std::string path = m_ignoredFilesList[i].toStdString();
+        m_xstrProcessor->addIgnoredFile(path);
     }
 
     saveSettings();
@@ -512,7 +512,7 @@ void Etemenanki::loadSettings() {
         addRegexRow(regexItem["regex_string"].toString(), QString::number(regexItem["string_position"].toInt()), QString::number(regexItem["id_position"].toInt()), regexItem["checked"].toBool());
     }
 
-    m_ignoredList.clear();
+    m_ignoredFilesList.clear();
     QJsonArray ignoredArray;
     if (settings.contains("ignored_list")) {
         ignoredArray = settings["ignored_list"].toArray();
@@ -521,7 +521,7 @@ void Etemenanki::loadSettings() {
     }
 
     for (const QJsonValue& value : ignoredArray) {
-        m_ignoredList.push_back(value.toString());
+        m_ignoredFilesList.push_back(value.toString());
     }
 
     file.close();
@@ -566,8 +566,8 @@ void Etemenanki::saveSettings() {
     settings["regex_rules"] = regexArray;
 
     QJsonArray ignoredArray;
-    for (int i = 0; i < m_ignoredList.size(); i++) {
-        ignoredArray.append(m_ignoredList[i]);
+    for (int i = 0; i < m_ignoredFilesList.size(); i++) {
+        ignoredArray.append(m_ignoredFilesList[i]);
     }
     settings["ignored_list"] = ignoredArray;
 
