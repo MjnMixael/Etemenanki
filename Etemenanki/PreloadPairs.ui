@@ -129,7 +129,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Preloaded XSTR Pairs - Are and loaded to xstr_pairs.json in %appdata%/Etemenanki</string>
+    <string>Preloaded XSTR Pairs - Are saved and loaded to xstr_pairs.json in %appdata%/Etemenanki</string>
    </property>
   </widget>
   <widget class="QTableWidget" name="preload_table_widget">
