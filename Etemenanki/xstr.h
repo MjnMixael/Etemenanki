@@ -41,11 +41,10 @@ struct XstrPair {
     std::vector<std::string> files;
     int discovery_order;
     bool invalid;
-    const RegexPattern* pattern;
 
     // Stretch goal.. make file an array of files. If file size > 1 then print a comment listing all the files
     // This particular pair was found in
-    XstrPair() : id(-1), text(""), printed(false), files(), discovery_order(-1), invalid(false), pattern(nullptr) {}
+    XstrPair() : id(-1), text(""), printed(false), files(), discovery_order(-1), invalid(false) {}
 };
 
 // If an enum is added here then you must also add code to
@@ -122,7 +121,7 @@ private:
     void validateXSTR(const RegexPattern& pattern, const std::string& line, int& id);
 
     // Saves a pair to the m_xstrList vector
-    void savePair(const RegexPattern& pattern, const std::string& line, int& id, bool invalid = false);
+    void savePair(const std::string& line, int& id, bool invalid = false);
 
     // Write a pair to the output file, usually tstrings.tbl
     void writePair(XstrPair* this_pair);

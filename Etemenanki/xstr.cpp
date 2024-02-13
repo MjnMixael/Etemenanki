@@ -133,7 +133,7 @@ void XstrProcessor::logEntry(const std::string& text, bool update_terminal) {
     }
 }
 
-void XstrProcessor::savePair(const RegexPattern& pattern, const std::string& line, int& id, bool invalid) {
+void XstrProcessor::savePair(const std::string& line, int& id, bool invalid) {
     // A quick verification that -1 is the only invalid ID stored
     if (id < 0) {
         id = -1;
@@ -149,7 +149,6 @@ void XstrProcessor::savePair(const RegexPattern& pattern, const std::string& lin
     newPair.files.push_back(m_currentFile);
     newPair.discovery_order = ++m_total;
     newPair.invalid = invalid;
-    newPair.pattern = &pattern;
 
     m_xstrList.push_back(newPair);
 }
@@ -304,7 +303,7 @@ void XstrProcessor::validateXSTR(const RegexPattern& pattern, const std::string&
             if (!m_readOnly && !m_comprehensiveScan && (id < 0)) {
                 id = getNewId();
             }
-            savePair(pattern, line, id);
+            savePair(line, id);
         } else {
             bool invalid = false;
             // The ID matches, but the strings didn't so this is an invalid ID. Time to get a new one
@@ -320,7 +319,7 @@ void XstrProcessor::validateXSTR(const RegexPattern& pattern, const std::string&
                     invalid = true;
                 }
             }
-            savePair(pattern, line, id, invalid);
+            savePair(line, id, invalid);
         }
     } else {
         // The string matches, does the ID?
@@ -418,7 +417,7 @@ std::string XstrProcessor::replaceContentID(const RegexPattern& pattern, const s
         XstrPair* thisPair = findPair(current_string);
         if (thisPair != nullptr) {
             current_id = thisPair->id;
-            modifiedContent = replacePattern(*thisPair->pattern, modifiedContent, current_string, current_id);
+            modifiedContent = replacePattern(pattern, modifiedContent, current_string, current_id);
         } else {
             // Well this isn't a good place to be.. log and skip!
             std::string msg = "Failed to find ID for string '" + current_string + "', skipping!";
