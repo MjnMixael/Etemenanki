@@ -52,6 +52,8 @@ Etemenanki::Etemenanki(QWidget *parent)
     connect(m_xstrProcessor, &XstrProcessor::update_terminal_text, this, &Etemenanki::update_terminal_output);
 
     m_xstrProcessor->setLogFilePath(m_logFilePath);
+
+    update_terminal_output("Ready!");
 }
 
 void Etemenanki::run_xstr() {
