@@ -354,7 +354,7 @@ void Etemenanki::on_begin_button_clicked() {
     QString outputFile = ui.output_file_line_edit->text();
     QString outputDirectory = ui.output_directory_line_edit->text();
     QString offset = ui.offset_line_edit->text();
-    bool replace = ui.replace_radio_button->isChecked();
+    bool replace = ui.replace_checkbox->isChecked();
 
     // Validate values
     if (directory.isEmpty()) {
@@ -462,7 +462,7 @@ void Etemenanki::toggleControls(bool val) {
     if (!m_fillInIds) {
         ui.offset_line_edit->setEnabled(val);
     }
-    ui.replace_radio_button->setEnabled(val);
+    ui.replace_checkbox->setEnabled(val);
     ui.output_directory_line_edit->setEnabled(val);
     ui.output_file_line_edit->setEnabled(val);
     ui.actionPreferences->setEnabled(val);
@@ -488,7 +488,7 @@ void Etemenanki::loadSettings() {
     ui.output_directory_line_edit->setText(settings.value("outputDirectory").toString(m_defaultOutputDirectory));
     ui.directory_line_edit->setText(settings["directory"].toString());
     ui.offset_line_edit->setText(settings.value("offset").toString(m_defaultOffset));
-    ui.replace_radio_button->setChecked(settings.value("replaceValues").toBool(m_defaultReplacement));
+    ui.replace_checkbox->setChecked(settings.value("replaceValues").toBool(m_defaultReplacement));
     m_comprehensiveScan = settings.value("comprehensive").toBool(m_comprehensiveScan);
     m_fillInIds = settings.value("fillInIds").toBool(m_fillInIds);
     m_sortingType = settings.value("sortingType").toInt(m_sortingType);
@@ -563,7 +563,7 @@ void Etemenanki::saveSettings() {
     settings["outputDirectory"] = ui.output_directory_line_edit->text();
     settings["directory"] = ui.directory_line_edit->text();
     settings["offset"] = ui.offset_line_edit->text();
-    settings["replaceValues"] = ui.replace_radio_button->isChecked();
+    settings["replaceValues"] = ui.replace_checkbox->isChecked();
     settings["comprehensive"] = m_comprehensiveScan;
     settings["fillInIds"] = m_fillInIds;
     settings["sortingType"] = m_sortingType;

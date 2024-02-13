@@ -367,7 +367,7 @@
      <string>ID Offset</string>
     </property>
    </widget>
-   <widget class="QRadioButton" name="replace_radio_button">
+   <widget class="QCheckBox" name="replace_checkbox">
     <property name="geometry">
      <rect>
       <x>16</x>
@@ -733,7 +733,7 @@ Make sure your directory path is correct!</string>
    <zorder>output_file_line_edit</zorder>
    <zorder>offset_line_edit</zorder>
    <zorder>offset_label</zorder>
-   <zorder>replace_radio_button</zorder>
+   <zorder>replace_checkbox</zorder>
    <zorder>position_string_line_edit</zorder>
    <zorder>position_label</zorder>
    <zorder>warning_label</zorder>
