@@ -143,8 +143,9 @@ void XstrProcessor::savePair(const std::string& line, int& id, bool invalid) {
         id = -1;
     }
 
-    if (isIdIgnored(id)) {
-        id = getNewId(id);
+    // If the ID is supposed to be not used or if the ID is already used, then we need a new one!
+    if (isIdIgnored(id) || (findPair(id) != nullptr)) {
+        id = getNewId();
     }
 
     XstrPair newPair;
