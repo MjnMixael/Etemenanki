@@ -155,6 +155,10 @@ void Etemenanki::toggleOffsetControl(bool val) {
     ui.offset_line_edit->setEnabled(val);
 }
 
+QString Etemenanki::getCurrentDirectory() {
+    return ui.directory_line_edit->text();
+}
+
 void Etemenanki::on_directory_browse_button_clicked() {
     QString directory = QFileDialog::getExistingDirectory(this, tr("Select Directory"),
         ui.directory_line_edit->text(),
@@ -402,6 +406,15 @@ void Etemenanki::loadPreloadedPairs() {
     QDir().mkpath(QFileInfo(filepath).absolutePath()); // Ensure the directory exists
     QFile file(filepath);
 
+    // Show a dialog while we process
+    QMessageBox waitDialog;
+    waitDialog.setWindowTitle("Processing");
+    waitDialog.setText("Please wait, parsing xstr_pairs.json file...");
+    waitDialog.setStandardButtons(0); // No buttons
+    waitDialog.show();
+
+    QApplication::processEvents();
+
     QJsonObject settings = {};
     if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         QJsonDocument doc(QJsonDocument::fromJson(file.readAll()));
@@ -423,6 +436,7 @@ void Etemenanki::loadPreloadedPairs() {
         pair.text = preloadItem["text"].toString().toStdString();
         pair.id = preloadItem["id"].toString().toInt();
         pair.files.push_back("Preloaded Pair");
+        pair.locked = true;
 
         if (pair.id < 0) {
             continue;
@@ -430,6 +444,8 @@ void Etemenanki::loadPreloadedPairs() {
 
         m_preloadedPairs.push_back(pair);
     }
+
+    waitDialog.accept();
 }
 
 void Etemenanki::on_begin_button_clicked() {
@@ -484,7 +500,14 @@ void Etemenanki::on_begin_button_clicked() {
     m_xstrProcessor->setCaseInsensitiveToggle(m_caseInsensitive);
 
     for (auto pair : m_preloadedPairs) {
-        m_xstrProcessor->addPreloadPair(pair);
+        if (!m_xstrProcessor->addPreloadPair(pair)) {
+            QString msg = "Pair ID '" + QString::number(pair.id) + "' is duplicated. Skipping!";
+            QMessageBox::information(
+                this,
+                "Duplicate ID!",
+                msg
+            );
+        }
     }
 
     for (int i = 0; i < ui.files_list_widget->count(); ++i) {

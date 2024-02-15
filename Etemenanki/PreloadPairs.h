@@ -30,6 +30,7 @@ public slots:
     void on_preload_remove_button_clicked();
     void on_preload_clear_button_clicked();
     void on_preload_table_widget_clicked();
+    void on_preload_import_button_clicked();
 private:
     Ui::PreloadPairsDialog ui;
     Etemenanki* m_etemenanki;
@@ -44,5 +45,7 @@ private:
     void savePreloadedPairs();
 
     void resetPreloadPairsInput();
+
+    void parseTstringsTable(const std::string& filename);
 
 };

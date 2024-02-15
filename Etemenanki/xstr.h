@@ -41,8 +41,9 @@ struct XstrPair {
     std::vector<std::string> files;
     int discovery_order;
     bool invalid;
+    bool locked; // Currently does nothing
 
-    XstrPair() : id(-1), text(""), printed(false), files(), discovery_order(-1), invalid(false) {}
+    XstrPair() : id(-1), text(""), printed(false), files(), discovery_order(-1), invalid(false), locked(false) {}
 };
 
 // If an enum is added here then you must also add code to
@@ -76,7 +77,7 @@ public:
     void setCaseInsensitiveToggle(bool val);
     void setOffset(int val);
     void setLogFilePath(QString path);
-    void addPreloadPair(XstrPair pair);
+    bool addPreloadPair(XstrPair pair);
 
     // Method to set runtime vectors
     void clearVectors();

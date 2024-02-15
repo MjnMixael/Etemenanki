@@ -119,8 +119,12 @@ void XstrProcessor::addIgnoredId(int id) {
     m_ignoredIds.push_back(id);
 }
 
-void XstrProcessor::addPreloadPair(XstrPair pair) {
-    m_xstrList.push_back(pair);
+bool XstrProcessor::addPreloadPair(XstrPair pair) {
+    if (!findPair(pair.id)) {
+        m_xstrList.push_back(pair);
+        return true;
+    }
+    return false;
 }
 
 void XstrProcessor::setTerminalText(const std::string &text) {
@@ -771,7 +775,6 @@ void XstrProcessor::run() {
     std::string outputPath = m_outputFilepath + m_outputFilename;
     addIgnoredFile(outputPath);
 
-    m_xstrList.clear();
     m_counter = 0;
     m_total = 0;
 
@@ -834,6 +837,8 @@ void XstrProcessor::run() {
 
     logEntry(msg);
     m_logFile.close();
+
+    m_xstrList.clear();
 
     g_continueProcessing = false;
     return;

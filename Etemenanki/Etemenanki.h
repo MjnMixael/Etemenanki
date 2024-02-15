@@ -17,6 +17,7 @@
 #include <QStandardPaths>
 #include <QDesktopServices>
 #include <QFileDialog>
+#include <QMessagebox>
 
 #include "ui_Etemenanki.h"
 #include "Settings.h"
@@ -50,6 +51,9 @@ public:
     // Check if an item exists in a widget
     static bool itemExists(QListWidget* listWidget, const QString& textToCheck);
     static bool itemExists(QTableWidget* tableWidget, const QString& textToCheck);
+
+    // For sub dialogs
+    QString getCurrentDirectory();
 
     // Public vectors
     QVector<QString> m_ignoredFilesList;

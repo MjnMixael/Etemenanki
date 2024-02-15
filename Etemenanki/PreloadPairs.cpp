@@ -86,6 +86,24 @@ void PreloadPairsDialog::on_preload_table_widget_clicked() {
     }
 }
 
+void PreloadPairsDialog::on_preload_import_button_clicked() {
+    QString dir = QDir::homePath();
+    if (m_etemenanki) {
+        QString current = m_etemenanki->getCurrentDirectory();
+        if (current.length() > 0) {
+            dir = current;
+        }
+    }
+
+    QString filename = QFileDialog::getOpenFileName(this, tr("Select Tstrings.tbl"),
+        dir,
+        tr("Table Files (*.tbl)")
+    );
+    if (!filename.isEmpty()) {
+        parseTstringsTable(filename.toStdString());
+    }
+}
+
 bool PreloadPairsDialog::itemExists(QTableWidget* tableWidget, const QString& textToCheck, const QString& idToCheck) {
     QList<QTableWidgetItem*> items = tableWidget->findItems(textToCheck, Qt::MatchExactly);
 
@@ -139,6 +157,15 @@ void PreloadPairsDialog::loadPreloadedPairs() {
     QDir().mkpath(QFileInfo(filepath).absolutePath()); // Ensure the directory exists
     QFile file(filepath);
 
+    // Show a dialog while we process
+    QMessageBox waitDialog;
+    waitDialog.setWindowTitle("Processing");
+    waitDialog.setText("Please wait, parsing xstr_pairs.json file...");
+    waitDialog.setStandardButtons(0); // No buttons
+    waitDialog.show();
+
+    QApplication::processEvents();
+
     QJsonObject settings = {};
     if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         QJsonDocument doc(QJsonDocument::fromJson(file.readAll()));
@@ -158,6 +185,8 @@ void PreloadPairsDialog::loadPreloadedPairs() {
         QJsonObject preloadItem = value.toObject();
         addNewPair(preloadItem["text"].toString(), preloadItem["id"].toString());
     }
+
+    waitDialog.accept();
 }
 
 void PreloadPairsDialog::savePreloadedPairs() {
@@ -182,4 +211,82 @@ void PreloadPairsDialog::savePreloadedPairs() {
     QJsonDocument doc(preloads);
     file.write(doc.toJson());
     file.close();
+}
+
+void PreloadPairsDialog::parseTstringsTable(const std::string& filename) {
+    std::ifstream file(filename);
+    std::string line, processedLine;
+    bool inDefaultSection = false;
+
+    // Clear the table
+    on_preload_clear_button_clicked();
+
+    // Show a dialog while we process
+    QMessageBox waitDialog;
+    waitDialog.setWindowTitle("Processing");
+    waitDialog.setText("Please wait, parsing file...");
+    waitDialog.setStandardButtons(0); // No buttons
+    waitDialog.show();
+
+    QApplication::processEvents();
+
+    while (std::getline(file, line)) {
+        // Skip comments, empty lines, and non-default sections
+        if (line.empty() || line.substr(0, 2) == ";;" || (line[0] == '#' && line != "#default" && !inDefaultSection)) {
+            continue;
+        }
+        if (line == "#default") {
+            inDefaultSection = true;
+            continue;
+        } else if (line == "#end") {
+            inDefaultSection = false;
+            continue;
+        }
+        if (!inDefaultSection) continue;
+
+        // Extract the integer before the comma
+        std::istringstream iss(line);
+        int number;
+        char comma;
+        if (!(iss >> number >> comma)) continue; // Skip if no number and comma
+
+        // Skip to the first quote
+        iss.ignore(std::numeric_limits<std::streamsize>::max(), '"');
+
+        std::string accumulatedText;
+        // Start capturing text immediately after the first quote within the same line
+        std::getline(iss, accumulatedText);
+
+        // If the accumulated text does not end with a quote, it means the string spans multiple lines
+        if (!accumulatedText.empty() && accumulatedText.back() != '"') {
+            // Remove the potential partial quote at the end if it exists
+            if (accumulatedText.back() == '"') {
+                accumulatedText.pop_back();
+            }
+
+            // Read and accumulate the rest of the text until the closing quote is found
+            do {
+                std::string nextLine;
+                if (std::getline(file, nextLine)) {
+                    // Check if the next line contains the closing quote
+                    size_t quotePos = nextLine.find('"');
+                    if (quotePos != std::string::npos) {
+                        // Append up to the closing quote and stop
+                        accumulatedText += "\n" + nextLine.substr(0, quotePos);
+                        break;
+                    } else {
+                        // If no closing quote, append the whole line and continue
+                        accumulatedText += "\n" + nextLine;
+                    }
+                }
+            } while (!file.eof());
+        } else if (!accumulatedText.empty()) {
+            // If the string ends with a quote, remove it
+            accumulatedText.pop_back();
+        }
+
+        addNewPair(QString::fromStdString(accumulatedText), QString::number(number));
+    }
+
+    waitDialog.accept();
 }
