@@ -300,7 +300,7 @@ void XstrProcessor::updateIds() {
 }
 
 
-void XstrProcessor::validateXSTR(const RegexPattern& pattern, const std::string& line, int& id) {
+void XstrProcessor::validateXSTR(const std::string& line, int& id) {
     XstrPair* thisPair = findPair(line);
 
     if (thisPair == nullptr) {
@@ -435,10 +435,10 @@ std::string XstrProcessor::replaceContentID(const RegexPattern& pattern, const s
     // If Replace_existing then everything gets a new ID
     } else if (m_replaceExisting) {
         current_id = getNewId(false);
-        validateXSTR(pattern, current_string, current_id);
+        validateXSTR(current_string, current_id);
         modifiedContent = replacePattern(pattern, modifiedContent, current_string, current_id);
     } else {
-        validateXSTR(pattern, current_string, current_id);
+        validateXSTR(current_string, current_id);
         modifiedContent = replacePattern(pattern, modifiedContent, current_string, current_id);
     }
 
@@ -607,7 +607,7 @@ void XstrProcessor::processFile(const fs::path& file_path, bool write) {
                     searchStart = content.begin() + pos + replacement.length();
                 } else {
                     // Validate or log the match without modifying the content
-                    validateXSTR(set, currentString, id);
+                    validateXSTR(currentString, id);
                     // Move searchStart to the end of the current match to continue searching
                     searchStart += match.position(0) + match.length(0);
                 }

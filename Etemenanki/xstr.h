@@ -118,7 +118,7 @@ private:
 
     // Validates an xstr pair by comparing existing strings and IDs in the m_xstrList.
     // Fixes invalid IDs and generates new ones if required
-    void validateXSTR(const RegexPattern& pattern, const std::string& line, int& id);
+    void validateXSTR(const std::string& line, int& id);
 
     // Saves a pair to the m_xstrList vector
     void savePair(const std::string& line, int& id, bool invalid = false);
