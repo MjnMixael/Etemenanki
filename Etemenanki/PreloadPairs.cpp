@@ -215,6 +215,15 @@ void PreloadPairsDialog::savePreloadedPairs() {
 
 void PreloadPairsDialog::parseTstringsTable(const std::string& filename) {
     std::ifstream file(filename);
+
+    // Check and skip BOM if present
+    char bom[3];
+    file.read(bom, 3);
+    if (!(bom[0] == (char)0xEF && bom[1] == (char)0xBB && bom[2] == (char)0xBF)) {
+        // No BOM, seek back to the beginning of the file
+        file.seekg(0);
+    }
+
     std::string line, processedLine;
     bool inDefaultSection = false;
 
