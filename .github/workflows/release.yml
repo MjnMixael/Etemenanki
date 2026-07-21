@@ -1,0 +1,207 @@
+name: Release
+
+# Build Etemenanki and publish binaries to a GitHub Release when a version
+# tag (e.g. Version_1.5.0) is pushed, then open a PR to update the Knossos
+# tool repo so the new version goes live.
+on:
+  push:
+    tags:
+      - 'Version_*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    name: Windows (x64)
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt 6.8.3
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          host: windows
+          target: desktop
+          arch: win64_msvc2022_64
+          cache: true
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Fetch Qt VS Tools MSBuild integration (QtMsBuild)
+        shell: pwsh
+        env:
+          VSADDIN_VERSION: '3.4.1'
+        run: |
+          # The .vcxproj was authored by Qt VS Tools and imports Qt.props /
+          # qt.targets from $(QtMsBuild). Those (fully generated) files ship
+          # inside the Qt VS Tools add-in .vsix, which is just a zip. Extract
+          # the QtMSBuild folder and point $(QtMsBuild) at it so the project's
+          # imports resolve without the VS extension being installed.
+          $ver = $env:VSADDIN_VERSION
+          $url = "https://download.qt.io/official_releases/vsaddin/$ver/qt-vsaddin-msvc2022-x64-$ver.vsix"
+          Invoke-WebRequest -Uri $url -OutFile qtvsaddin.zip
+          Expand-Archive -Path qtvsaddin.zip -DestinationPath qtvsaddin -Force
+          $qtmsbuild = Join-Path $PWD "qtvsaddin\QtMSBuild"
+          if (-not (Test-Path "$qtmsbuild\qt.targets")) {
+            throw "QtMSBuild not found at $qtmsbuild"
+          }
+          "QtMsBuild=$qtmsbuild" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Build (Release|x64)
+        shell: pwsh
+        run: |
+          # QT_ROOT_DIR is exported by install-qt-action. QtMsBuild accepts a
+          # full path in QtInstall, bypassing the machine-registered-version
+          # lookup that the local .vcxproj relies on.
+          msbuild Etemenanki.sln `
+            /m `
+            /p:Configuration=Release `
+            /p:Platform=x64 `
+            /p:QtInstall="$env:QT_ROOT_DIR" `
+            /verbosity:minimal
+
+      - name: Package with windeployqt
+        shell: pwsh
+        run: |
+          # The Knossos entry expects the exe at "Release/Etemenanki.exe" inside
+          # the zip, so stage into a Release\ folder and archive that folder.
+          $staging = "dist\Release"
+          New-Item -ItemType Directory -Force -Path $staging | Out-Null
+          Copy-Item "x64\Release\Etemenanki.exe" $staging
+          & "$env:QT_ROOT_DIR\bin\windeployqt.exe" `
+            --release --no-translations --compiler-runtime `
+            "$staging\Etemenanki.exe"
+          Copy-Item "readme.md","LICENSE.md" $staging -ErrorAction SilentlyContinue
+
+      - name: Zip
+        shell: pwsh
+        run: |
+          $name = if ($env:GITHUB_REF_NAME) { $env:GITHUB_REF_NAME } else { "dev" }
+          $zip = "Etemenanki-$name-win64.zip"
+          Compress-Archive -Path "dist\Release" -DestinationPath $zip -Force
+          "ASSET=$zip" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Etemenanki-win64
+          path: ${{ env.ASSET }}
+
+      - name: Publish to Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ASSET }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+
+  # Open a pull request against the Knossos tool repo to point it at the new
+  # release. Runs only on a real tag, only after the Windows build/publish
+  # succeeded, and only if the KNOSSOS_PAT secret is configured.
+  knossos-pr:
+    name: Propose Knossos update
+    needs: windows
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for token
+        id: gate
+        env:
+          KNOSSOS_PAT: ${{ secrets.KNOSSOS_PAT }}
+        run: |
+          if [ -n "$KNOSSOS_PAT" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::KNOSSOS_PAT secret not set — skipping Knossos PR."
+          fi
+
+      - name: Checkout Knossos tool repo (upstream)
+        if: steps.gate.outputs.enabled == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: KnossosNET/Knet-Tool-Repo
+          ref: main
+          token: ${{ secrets.KNOSSOS_PAT }}
+          path: knossos
+
+      - name: Update knet_tools.json
+        if: steps.gate.outputs.enabled == 'true'
+        working-directory: knossos
+        env:
+          TAG: ${{ github.ref_name }}
+          DOWNLOAD_URL: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/Etemenanki-${{ github.ref_name }}-win64.zip
+        run: |
+          set -euo pipefail
+          # Version tags look like "Version_1.5.0"; Knossos wants "1.5.0".
+          export VER="${TAG#Version_}"
+          export DATE="$(date -u +%F)"
+          # Surgical, minimal-diff edit: only the Etemenanki entry's version,
+          # last_update and download_url change. We splice inside that one JSON
+          # object's braces rather than re-serialize the whole file, so the rest
+          # of knet_tools.json (which has inconsistent indentation) is untouched.
+          python3 - "knet_tools.json" <<'PY'
+          import io, os, re, json, sys
+          path = sys.argv[1]
+          ver  = os.environ["VER"]
+          date = os.environ["DATE"]
+          url  = os.environ["DOWNLOAD_URL"]
+
+          s = io.open(path, encoding="utf-8").read()
+          m = re.search(r'"name"\s*:\s*"Etemenanki"', s)
+          if not m:
+              sys.exit("Etemenanki entry not found")
+          start = s.rfind("{", 0, m.start())
+          depth, i, end = 0, start, None
+          while i < len(s):
+              if s[i] == "{":
+                  depth += 1
+              elif s[i] == "}":
+                  depth -= 1
+                  if depth == 0:
+                      end = i + 1
+                      break
+              i += 1
+          if end is None:
+              sys.exit("could not find end of Etemenanki object")
+
+          block = s[start:end]
+          block = re.sub(r'("version"\s*:\s*)"[^"]*"',      r'\g<1>"%s"' % ver,  block, count=1)
+          block = re.sub(r'("last_update"\s*:\s*)"[^"]*"',  r'\g<1>"%s"' % date, block, count=1)
+          block = re.sub(r'("download_url"\s*:\s*)"[^"]*"', r'\g<1>"%s"' % url,  block, count=1)
+          s2 = s[:start] + block + s[end:]
+
+          data = json.loads(s2)  # fail loudly if we produced invalid JSON
+          a = [e for e in data if e.get("name") == "Etemenanki"][0]
+          assert a["version"] == ver, a["version"]
+          assert a["last_update"] == date, a["last_update"]
+          assert a["packages"][0]["download_url"] == url, a["packages"][0]["download_url"]
+
+          io.open(path, "w", encoding="utf-8", newline="").write(s2)
+          PY
+          git --no-pager diff -- knet_tools.json
+
+      - name: Create pull request
+        if: steps.gate.outputs.enabled == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.KNOSSOS_PAT }}
+          path: knossos
+          push-to-fork: MjnMixael/Knet-Tool-Repo
+          branch: etemenanki-${{ github.ref_name }}
+          base: main
+          commit-message: "Update Etemenanki to ${{ github.ref_name }}"
+          title: "Update Etemenanki to ${{ github.ref_name }}"
+          body: |
+            Automated update of **Etemenanki** to `${{ github.ref_name }}`.
+
+            - Release: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}
+
+            Opened automatically by the Etemenanki release workflow.
+          delete-branch: true
