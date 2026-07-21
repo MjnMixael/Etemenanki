@@ -33,8 +33,9 @@ void IgnoreIdsDialog::accept() {
 
 void IgnoreIdsDialog::addIgnoreIdsItem(QString id) {
     if (!Etemenanki::itemExists(ui.ignore_ids_list_widget, id)) {
-        // Make sure it's a valid positive integer
-        if (id > 0) {
+        // Make sure a value was entered (the line edit's QIntValidator already
+        // restricts input to a non-negative integer).
+        if (!id.isEmpty()) {
             ui.ignore_ids_list_widget->addItem(id);
             ui.ignore_ids_line_edit->clear();
         }

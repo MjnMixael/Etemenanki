@@ -410,7 +410,7 @@ void Etemenanki::loadPreloadedPairs() {
     QMessageBox waitDialog;
     waitDialog.setWindowTitle("Processing");
     waitDialog.setText("Please wait, parsing xstr_pairs.json file...");
-    waitDialog.setStandardButtons(0); // No buttons
+    waitDialog.setStandardButtons(QMessageBox::NoButton); // No buttons
     waitDialog.show();
 
     QApplication::processEvents();
